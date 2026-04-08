@@ -41,7 +41,6 @@ public class UserInterface {
 
     //  DISPLAY METHODS
 
-
     private void printWelcomeBanner() {
 
          System.out.println("╔══════════════════════════════════════════════════╗");
