@@ -1,0 +1,7 @@
+Flaws / Bugs in the Code:
+1. Formatting layout / design FLAWS
+2. Importing and exporting assembly code files
+3. Stream input of set register / memory values Instead of individual input
+4. Expanding the help Menu
+5. Make the Through debug mode Work Remove it completely
+6. Remove load machine code Because it is very unnecessary

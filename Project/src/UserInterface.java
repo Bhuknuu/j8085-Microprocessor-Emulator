@@ -120,7 +120,7 @@ public class UserInterface {
              case 7: handleSetValue();         break;
              case 8: handleReset();            break;
              case 9: handleHelp();             break;
-             case 10: running = false;          break;
+             case 10: running = false;         break;
              default:
                  System.out.println("Invalid option. Please try again.");
          }

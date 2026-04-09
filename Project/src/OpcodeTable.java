@@ -1,7 +1,7 @@
 import java.util.HashMap;
 import java.util.Map;
 
-// OpcodeTable — Complete 8085 opcode lookup (all 256 entries)
+// OpcodeTable: Complete 8085 opcode lookup (all 256 entries)
 public class OpcodeTable {
     public static class OpcodeEntry {
         public final int opcode;

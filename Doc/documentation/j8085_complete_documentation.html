@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>j8085 Microprocessor Simulator — Complete Technical Documentation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface-2: #1a1a26;
+    --border: #2a2a3a;
+    --text: #c8c8d4;
+    --text-dim: #6a6a80;
+    --text-bright: #e8e8f0;
+    --accent: #6c8cff;
+    --accent-dim: #3a4a8a;
+    --green: #4adb7a;
+    --amber: #dba64a;
+    --red: #db4a4a;
+    --cyan: #4ad4db;
+    --purple: #a86cff;
+    --code-bg: #0f0f18;
+    --radius: 6px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.78;
+    font-size: 15.5px;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 60px 32px 120px;
+  }
+
+  h1, h2, h3, h4 { color: var(--text-bright); font-weight: 600; letter-spacing: -0.02em; }
+  h1 { font-size: 2.2em; margin: 0 0 12px; line-height: 1.2; }
+  h2 { font-size: 1.55em; margin: 56px 0 18px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 1.18em; margin: 36px 0 12px; color: var(--accent); }
+  h4 { font-size: 1em; margin: 24px 0 8px; color: var(--cyan); }
+
+  p { margin: 0 0 16px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .subtitle { color: var(--text-dim); font-size: 1.05em; margin-bottom: 8px; }
+  .date { color: var(--text-dim); font-size: 0.85em; font-family: 'IBM Plex Mono', monospace; margin-bottom: 40px; display: block; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75em;
+    font-weight: 600;
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .badge-file { background: var(--accent-dim); color: var(--accent); }
+  .badge-concept { background: #2a3a2a; color: var(--green); }
+  .badge-decision { background: #3a2a2a; color: var(--amber); }
+  .badge-phase { background: #2a2a3a; color: var(--purple); }
+  .badge-critical { background: #3a2222; color: var(--red); }
+
+  .file-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin: 28px 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .file-header .filename {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.05em;
+    color: var(--text-bright);
+    font-weight: 600;
+  }
+  .file-header .lines {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8em;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    overflow-x: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13.5px;
+    line-height: 1.65;
+    margin: 0 0 20px;
+    color: var(--text);
+    tab-size: 4;
+  }
+
+  pre .kw { color: var(--purple); }
+  pre .type { color: var(--cyan); }
+  pre .str { color: var(--green); }
+  pre .num { color: var(--amber); }
+  pre .cmt { color: var(--text-dim); font-style: italic; }
+  pre .fn { color: #dba64a; }
+  pre .ann { color: var(--accent); }
+
+  .explain {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 16px 20px;
+    margin: 0 0 24px;
+    font-size: 0.94em;
+  }
+
+  .why {
+    background: var(--surface-2);
+    border-left: 3px solid var(--amber);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 16px 20px;
+    margin: 0 0 24px;
+    font-size: 0.94em;
+  }
+
+  .alt {
+    background: var(--surface-2);
+    border-left: 3px solid var(--purple);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 16px 20px;
+    margin: 0 0 24px;
+    font-size: 0.94em;
+  }
+
+  .why strong, .explain strong, .alt strong { color: var(--text-bright); }
+
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin: 0 0 16px;
+  }
+  .feature-card h4 { margin: 0 0 8px; }
+  .feature-card p:last-child { margin: 0; }
+  .feature-card .priority {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7em;
+    font-weight: 600;
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    margin-left: 8px;
+  }
+  .priority-high { background: #3a2222; color: var(--red); }
+  .priority-med  { background: #3a3222; color: var(--amber); }
+  .priority-low  { background: #22323a; color: var(--cyan); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 24px;
+    font-size: 0.92em;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+  }
+  th { background: var(--surface); color: var(--text-bright); font-weight: 600; }
+  td { background: var(--surface-2); }
+  td code, p code, li code {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.88em;
+    color: var(--cyan);
+  }
+
+  ul, ol { padding-left: 24px; margin: 0 0 18px; }
+  li { margin-bottom: 6px; }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+
+  /* ─── Master TOC ─── */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    margin: 0 0 48px;
+  }
+  .toc h4 { color: var(--text-dim); margin: 0 0 12px; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.1em; }
+  .toc ol { padding-left: 20px; margin: 0; }
+  .toc li { margin-bottom: 4px; font-size: 0.92em; }
+  .toc .day-group { margin: 16px 0 4px; font-size: 0.78em; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; list-style: none; margin-left: -20px; }
+  .toc .day-group:first-child { margin-top: 0; }
+
+  /* ─── Day Divider ─── */
+  .day-divider {
+    margin: 80px 0 40px;
+    padding: 28px 0;
+    border-top: 2px solid var(--accent-dim);
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+  .day-divider h1 {
+    font-size: 1.8em;
+    margin: 0 0 6px;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .day-divider .day-sub {
+    color: var(--text-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85em;
+  }
+
+  /* ─── Phase Header ─── */
+  .phase-header {
+    background: linear-gradient(135deg, var(--surface), var(--surface-2));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin: 40px 0 20px;
+  }
+  .phase-header h3 { margin: 0 0 4px; }
+  .phase-header p { margin: 0; font-size: 0.9em; color: var(--text-dim); }
+
+  /* ─── Back to Top ─── */
+  .back-top {
+    display: inline-block;
+    margin: 32px 0 0;
+    padding: 8px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.82em;
+    color: var(--text-dim);
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .back-top:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<!-- ╔════════════════════════════════════════════════════════════════════╗ -->
+<!-- ║                     TITLE & MASTER TOC                           ║ -->
+<!-- ╚════════════════════════════════════════════════════════════════════╝ -->
+
+<p class="subtitle">j8085 Microprocessor Simulator</p>
+<h1>Complete Technical Documentation</h1>
+<span class="date">9 Source Files &bull; 1,966 Lines &bull; 3-Day Coverage &bull; 30+ Future Features</span>
+
+<div class="toc" id="top">
+  <h4>Master Table of Contents</h4>
+  <ol>
+    <li class="day-group">Day 1 — Foundation Layer</li>
+    <li><a href="#overview">Project Overview and Architectural Thesis</a></li>
+    <li><a href="#exception">SimulatorException: The Error Backbone</a></li>
+    <li><a href="#memory">Memory: The Interface Contract</a></li>
+    <li><a href="#alu">ALU: Arithmetic Logic Unit</a></li>
+    <li><a href="#instrucset">InstrucSet: The Instruction Set Interface</a></li>
+    <li><a href="#day1-summary">Day 1 Summary and Forward Context</a></li>
+
+    <li class="day-group">Day 2 — Core Engine</li>
+    <li><a href="#opcode">OpcodeTable: The Instruction Decoder ROM</a></li>
+    <li><a href="#assembler">Assembler: Two-Pass Translation</a></li>
+    <li><a href="#architecture">Architecture: The CPU Core</a></li>
+    <li><a href="#day2-summary">Day 2 Summary</a></li>
+
+    <li class="day-group">Day 3 — Integration, UI, and Future Roadmap</li>
+    <li><a href="#main">Main: The Power-On Reset</a></li>
+    <li><a href="#ui">UserInterface: The Human Layer</a></li>
+    <li><a href="#integration">System Integration: How Everything Connects</a></li>
+    <li><a href="#examples">Working Example Programmes</a></li>
+    <li><a href="#roadmap">Full-Fledged Programme Roadmap (30+ Features)</a></li>
+  </ol>
+</div>
+
+
+<!-- ╔════════════════════════════════════════════════════════════════════════╗ -->
+<!-- ║                                                                      ║ -->
+<!-- ║                     D A Y   1 :  F O U N D A T I O N                 ║ -->
+<!-- ║                                                                      ║ -->
+<!-- ╚════════════════════════════════════════════════════════════════════════╝ -->
+
+<div class="day-divider" id="day1">
+  <h1>Day 1: Foundation Layer</h1>
+  <span class="day-sub">SimulatorException &bull; Memory &bull; ALU &bull; InstrucSet</span>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="overview">1. Project Overview and Architectural Thesis</h2>
+
+<p>The j8085 Microprocessor Simulator is a software reconstruction of the Intel 8085A microprocessor, a chip that Intel released in 1976 as the successor to the 8080. The physical 8085 contains approximately 6,500 transistors arranged on a single piece of silicon, providing an 8-bit data bus and a 16-bit address bus. It can address up to 64 kilobytes of memory. Our simulator reproduces the observable behaviour of this chip entirely in Java, meaning that any assembly language programme written for the real 8085 will produce identical register states, flag states, and memory contents when executed in our software model.</p>
+
+<p>The fundamental question that governs every design decision in this project is: <strong>how do you translate a physical, parallel, electrically-driven machine into a sequential, software-driven model without losing behavioural fidelity?</strong> The answer lies in composition. Rather than building one monolithic class that handles everything from flag computation to memory addressing, we decompose the processor into the same logical units that an electrical engineer would recognise on the chip's block diagram.</p>
+
+<p>The project consists of nine Java source files. Each file corresponds to one identifiable subsystem of the hardware:</p>
+
+<table>
+  <tr><th>File</th><th>Hardware Analogue</th><th>Lines</th><th>Role</th></tr>
+  <tr><td><code>SimulatorException.java</code></td><td>Hardware fault signals</td><td>51</td><td>Structured error reporting</td></tr>
+  <tr><td><code>Memory.java</code></td><td>Address/data bus contract</td><td>16</td><td>Interface: memory operations</td></tr>
+  <tr><td><code>ALU.java</code></td><td>Arithmetic Logic Unit</td><td>150</td><td>Computation + 5 flags</td></tr>
+  <tr><td><code>InstrucSet.java</code></td><td>Instruction decoder pins</td><td>94</td><td>Interface: 74 mnemonics</td></tr>
+  <tr><td><code>OpcodeTable.java</code></td><td>Instruction decoder ROM</td><td>200</td><td>256-entry opcode lookup</td></tr>
+  <tr><td><code>Assembler.java</code></td><td>External assembler tool</td><td>270</td><td>Two-pass assembler</td></tr>
+  <tr><td><code>Architecture.java</code></td><td>The CPU die itself</td><td>853</td><td>Registers, fetch-decode-execute</td></tr>
+  <tr><td><code>UserInterface.java</code></td><td>Front panel / terminal</td><td>325</td><td>CLI interaction layer</td></tr>
+  <tr><td><code>Main.java</code></td><td>Power-on reset</td><td>7</td><td>Entry point</td></tr>
+</table>
+
+<p>Today, Day 1, we examine the four foundational files that everything else is built upon. Without the error system, the simulator cannot communicate failures. Without the Memory interface, the CPU has no contract for how it reads and writes bytes. Without the ALU, the CPU cannot compute anything. Without the InstrucSet interface, there is no formal specification of what instructions exist. These four files form the bedrock.</p>
+
+<hr>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="exception">2. SimulatorException: The Error Backbone</h2>
+
+<div class="file-header">
+  <span class="badge badge-file">SimulatorException.java</span>
+  <span class="filename">SimulatorException.java</span>
+  <span class="lines">51 lines</span>
+</div>
+
+<p>Every simulator must handle errors, but the nature of the errors in a microprocessor simulator is fundamentally different from ordinary software errors. When a user writes <code>MOV A, X</code> (where X is not a valid register name), the error is not a null pointer or an array index violation in the Java sense. It is a <em>hardware-level semantic error</em>: the instruction references a register that does not exist on the physical chip. Our exception system must capture this distinction. It must tell the user not just "something went wrong" but "this specific kind of hardware-level violation occurred, and here is the memory address where it happened."</p>
+
+<h3>The ErrorType Enum</h3>
+
+<pre><span class="kw">public</span> <span class="kw">class</span> <span class="type">SimulatorException</span> <span class="kw">extends</span> <span class="type">Exception</span> {
+    <span class="kw">public</span> <span class="kw">enum</span> <span class="type">ErrorType</span> {
+        InvalidMemoryAddress,     <span class="cmt">// Address outside 0x0000-0xFFFF</span>
+        InvalidRegister,          <span class="cmt">// Unrecognised register name</span>
+        InvalidOpcode,            <span class="cmt">// Unrecognised instruction opcode</span>
+        InvalidData,              <span class="cmt">// Data value outside valid range</span>
+        StackOverflow,            <span class="cmt">// SP went below 0x0000</span>
+        StackUnderflow,           <span class="cmt">// SP went above initial value</span>
+        MemoryOutOfBound,         <span class="cmt">// Access outside allocated range</span>
+        HaltEncounter,            <span class="cmt">// HLT executed (not truly an error)</span>
+        SyntaxError,              <span class="cmt">// Assembly syntax invalid</span>
+        UndefinedAddress          <span class="cmt">// Label doesn't exist</span>
+    }</pre>
+
+<div class="explain">
+  <strong>What is happening here.</strong> We define a Java <code>enum</code> called <code>ErrorType</code> nested inside the exception class. An enum is a special type in Java that represents a fixed set of named constants. Rather than throwing a generic <code>Exception</code> with only a string message, every <code>SimulatorException</code> carries a typed constant that tells the caller precisely which category of failure occurred. The caller can then programmatically react to the error type (for example, displaying a different help message for a syntax error versus a memory violation) without having to parse the human-readable message string.
+</div>
+
+<div class="why">
+  <strong>Why an enum and not integer error codes?</strong> Integer error codes (like <code>ERROR_CODE = 3</code>) are fragile. A developer can accidentally compare against the wrong number. Enums are type-safe: the Java compiler will refuse to compile code that compares an <code>ErrorType</code> against an integer or against a string. They also serve as self-documenting code. When you read <code>ErrorType.InvalidMemoryAddress</code>, you understand the meaning immediately, whereas <code>ERROR_3</code> forces you to look up a table.
+</div>
+
+<div class="alt">
+  <strong>Alternative considered: exception subclasses.</strong> One could create a class hierarchy: <code>InvalidRegisterException extends SimulatorException</code>, <code>StackOverflowException extends SimulatorException</code>, and so forth. This is the approach that large frameworks like Spring use. We rejected it because ten separate exception classes for a project of this size would be excessive. The enum approach keeps all error categories in a single file while still providing type-safe discrimination. If the project grows to hundreds of error types, the subclass approach would become more appropriate.
+</div>
+
+<h3>The Three Constructors</h3>
+
+<pre>    <span class="kw">private final</span> <span class="type">ErrorType</span> errorType;
+    <span class="kw">private final int</span> address;
+
+    <span class="kw">public</span> <span class="fn">SimulatorException</span>(<span class="type">String</span> message) {
+        <span class="kw">super</span>(message);
+        <span class="kw">this</span>.errorType = ErrorType.InvalidData;
+        <span class="kw">this</span>.address = <span class="num">-1</span>;
+    }
+
+    <span class="kw">public</span> <span class="fn">SimulatorException</span>(<span class="type">String</span> message, <span class="type">ErrorType</span> errorType) {
+        <span class="kw">super</span>(message);
+        <span class="kw">this</span>.errorType = errorType;
+        <span class="kw">this</span>.address = <span class="num">-1</span>;
+    }
+
+    <span class="kw">public</span> <span class="fn">SimulatorException</span>(<span class="type">String</span> message, <span class="type">ErrorType</span> errorType, <span class="kw">int</span> address) {
+        <span class="kw">super</span>(message);
+        <span class="kw">this</span>.errorType = errorType;
+        <span class="kw">this</span>.address = address;
+    }</pre>
+
+<div class="explain">
+  <strong>What is happening here.</strong> Three constructors form a telescoping pattern. The simplest takes only a message and defaults to <code>InvalidData</code> with no address. The middle constructor adds the error type. The fullest constructor adds the memory address where the error occurred. This address field is critical: when the cpu encounters an invalid opcode at address <code>0x2007</code>, the exception carries that address so the user interface can display exactly where in their programme the failure happened. The sentinel value <code>-1</code> means "address not applicable."
+</div>
+
+<h3>The toString Override</h3>
+
+<pre>    <span class="ann">@Override</span>
+    <span class="kw">public</span> <span class="type">String</span> <span class="fn">toString</span>() {
+        <span class="kw">return</span> <span class="type">String</span>.format(<span class="str">"[%s]%s: %s"</span>,
+            errorType,
+            (address != <span class="num">-1</span>) ? <span class="type">String</span>.format(<span class="str">" at 0x%04X"</span>, address) : <span class="str">""</span>,
+            getMessage());
+    }</pre>
+
+<div class="explain">
+  <strong>What is happening here.</strong> The <code>toString</code> method is what Java calls when the object must be rendered as text (for example, when printing it to the console). We override the default <code>Exception.toString()</code> to produce output like <code>[InvalidOpcode] at 0x2007: Unknown opcode: 0x08</code>. The <code>%04X</code> format specifier prints the address as a four-digit uppercase hexadecimal number with leading zeros, which is the standard notation for 8085 memory addresses. The conditional expression ensures that when no address is relevant (such as for a syntax error during assembly), no spurious "at 0xFFFF" is appended.
+</div>
+
+<a href="#top" class="back-top">&uarr; Back to Top</a>
+
+<hr>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="memory">3. Memory: The Interface Contract</h2>
+
+<div class="file-header">
+  <span class="badge badge-file">Memory.java</span>
+  <span class="filename">Memory.java</span>
+  <span class="lines">16 lines</span>
+</div>
+
+<p>In the physical 8085, memory is not part of the CPU. Memory is a separate integrated circuit (or set of circuits) that sits on the circuit board and communicates with the CPU over the address bus (16 wires carrying the address) and the data bus (8 wires carrying the data byte). The CPU sends an address on the address bus, asserts a read or write control signal, and the memory chip responds by either providing or accepting a byte on the data bus.</p>
+
+<p>In our simulator, this separation is modelled by making memory an <em>interface</em> rather than a class. The <code>Architecture</code> class (the CPU) implements this interface, which means the CPU "contains" physical memory in our model. This is a simplification. In a more elaborate simulator, one might have separate <code>RAM</code> and <code>ROM</code> classes, or even memory-mapped I/O regions, all implementing this same interface through the Strategy pattern.</p>
+
+<pre><span class="kw">public interface</span> <span class="type">Memory</span> {
+    <span class="kw">int</span> DEFAULT_START_ADDRESS = <span class="num">0x0000</span>;
+    <span class="kw">int</span> DEFAULT_END_ADDRESS   = <span class="num">0xFFFF</span>;
+    <span class="kw">int</span> MAX_MEMORY_SIZE       = <span class="num">65536</span>;
+
+    <span class="kw">int</span>  <span class="fn">readMemory</span>(<span class="kw">int</span> address) <span class="kw">throws</span> <span class="type">SimulatorException</span>;
+    <span class="kw">void</span> <span class="fn">writeMemory</span>(<span class="kw">int</span> address, <span class="kw">int</span> data) <span class="kw">throws</span> <span class="type">SimulatorException</span>;
+    <span class="kw">void</span> <span class="fn">resetMemory</span>();
+    <span class="kw">int</span>[]<span class="fn"> getMemoryDump</span>();
+    <span class="kw">int</span>  <span class="fn">getMemoryStart</span>();
+    <span class="kw">int</span>  <span class="fn">getMemoryEnd</span>();
+    <span class="kw">void</span> <span class="fn">loadProgram</span>(<span class="kw">int</span> startAddress, <span class="kw">int</span>[] data) <span class="kw">throws</span> <span class="type">SimulatorException</span>;
+    <span class="kw">void</span> <span class="fn">displayMemoryRange</span>(<span class="kw">int</span> fromAddress, <span class="kw">int</span> toAddress);
+}</pre>
+
+<div class="explain">
+  <strong>Why <code>int</code> for addresses and data, not <code>byte</code>?</strong> Java's <code>byte</code> type is signed, ranging from -128 to +127. The 8085's memory locations hold values from 0x00 to 0xFF (0 to 255). If we used <code>byte</code>, a value like 0xFF would be interpreted as -1 in Java, requiring constant <code>&amp; 0xFF</code> masking at every usage site. Using <code>int</code> avoids this problem entirely: an <code>int</code> can hold any value from 0 to 255 without sign ambiguity. We still mask with <code>&amp; 0xFF</code> at write boundaries for safety, but we do it once (in the implementation) rather than everywhere.
+</div>
+
+<div class="why">
+  <strong>Why <code>int</code> for addresses, not <code>short</code>?</strong> Java's <code>short</code> is 16 bits, which matches the 8085's 16-bit address bus. However, <code>short</code> is signed in Java (-32768 to +32767), whereas memory addresses are inherently unsigned (0x0000 to 0xFFFF). Address 0xFFFF would be interpreted as -1 as a <code>short</code>. Java was not designed with unsigned types (until Java 8 added limited support). Using <code>int</code> for addresses gives us a clean unsigned range from 0 to 65535 with no sign complications. The minor memory overhead (4 bytes instead of 2 per address variable) is negligible in a simulator context.
+</div>
+
+<h3>The Constants</h3>
+
+<div class="explain">
+  <strong>Interface constants in Java.</strong> When you declare a variable inside a Java interface, it is implicitly <code>public static final</code>. This means <code>DEFAULT_START_ADDRESS</code>, <code>DEFAULT_END_ADDRESS</code>, and <code>MAX_MEMORY_SIZE</code> are compile-time constants accessible from anywhere as <code>Memory.MAX_MEMORY_SIZE</code>. We place them in the interface rather than in the implementing class because they represent the <em>contract</em> of what any memory implementation must respect, not implementation details of one particular memory.
+</div>
+
+<div class="alt">
+  <strong>Alternative: abstract class instead of interface.</strong> We could have used an <code>abstract class BaseMemory</code> with default method implementations. This would allow shared code (like the <code>displayMemoryRange</code> method) to live in the base class. We chose an interface because Java supports multiple interface implementation but only single class inheritance. Since <code>Architecture</code> also implements <code>InstrucSet</code>, using interfaces for both keeps the design flexible. If shared method implementations become necessary in the future, Java's <code>default</code> methods in interfaces (available since Java 8) would let us add them without changing the design.
+</div>
+
+<a href="#top" class="back-top">&uarr; Back to Top</a>
+
+<hr>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="alu">4. ALU: Arithmetic Logic Unit</h2>
+
+<div class="file-header">
+  <span class="badge badge-file">ALU.java</span>
+  <span class="filename">ALU.java</span>
+  <span class="lines">150 lines</span>
+</div>
+
+<p>The Arithmetic Logic Unit is the computational engine of the 8085. On the physical chip, the ALU is a combinational logic circuit that accepts two 8-bit inputs and produces one 8-bit output along with five condition flags. It does not store the inputs or the output; it merely computes. In our simulator, the ALU class encapsulates both the computation methods and the five flag flip-flops, because in the real hardware those flags are physically located adjacent to the ALU and are set by its output signals.</p>
+
+<h3>The Five Flags</h3>
+
+<pre><span class="kw">public class</span> <span class="type">ALU</span> {
+    <span class="kw">private boolean</span> signFlag;      <span class="cmt">// S: set if bit 7 of result is 1</span>
+    <span class="kw">private boolean</span> zeroFlag;      <span class="cmt">// Z: set if result is 0x00</span>
+    <span class="kw">private boolean</span> auxCarryFlag;  <span class="cmt">// AC: carry from bit 3 to bit 4</span>
+    <span class="kw">private boolean</span> parityFlag;    <span class="cmt">// P: set if number of 1-bits is even</span>
+    <span class="kw">private boolean</span> carryFlag;     <span class="cmt">// CY: carry/borrow out of bit 7</span>
+}</pre>
+
+<div class="explain">
+  <strong>What each flag represents in hardware.</strong> The 8085's flag register is a physical 8-bit latch where only five bits are meaningfully used. The layout is <code>[S Z 0 AC 0 P 1 CY]</code>, reading from bit 7 down to bit 0. Bit 5 is always 0, bit 3 is always 0, and bit 1 is always 1. These fixed bits are artefacts of the silicon layout and exist because Intel did not wire those flip-flop outputs to anything. We model each meaningful bit as a separate <code>boolean</code> field because booleans read more naturally in conditionals (<code>if (zeroFlag)</code> versus <code>if ((flags &amp; 0x40) != 0)</code>).
+</div>
+
+<table>
+  <tr><th>Flag</th><th>Bit</th><th>Set When</th><th>Used By</th></tr>
+  <tr><td>S (Sign)</td><td>7</td><td>Result bit 7 is 1 (negative in two's complement)</td><td>JM, JP, CM, CP</td></tr>
+  <tr><td>Z (Zero)</td><td>6</td><td>Result is exactly 0x00</td><td>JZ, JNZ, CZ, CNZ</td></tr>
+  <tr><td>AC (Aux Carry)</td><td>4</td><td>Carry from lower nibble (bit 3) to upper nibble (bit 4)</td><td>DAA (BCD correction)</td></tr>
+  <tr><td>P (Parity)</td><td>2</td><td>Number of 1-bits in result is <em>even</em></td><td>JPE, JPO, CPE, CPO</td></tr>
+  <tr><td>CY (Carry)</td><td>0</td><td>Carry out of bit 7 (addition) or borrow into bit 7 (subtraction)</td><td>JC, JNC, CC, CNC, ADC, SBB</td></tr>
+</table>
+
+<h3>The Core Flag Update Method</h3>
+
+<pre>    <span class="kw">public void</span> <span class="fn">updateAllFlags</span>(<span class="kw">int</span> result, <span class="kw">int</span> op1Lower, <span class="kw">int</span> op2Lower, <span class="kw">boolean</span> isSubtraction) {
+        <span class="kw">if</span> (isSubtraction) {
+            carryFlag = (result < <span class="num">0</span>);
+            auxCarryFlag = (op1Lower - op2Lower) < <span class="num">0</span>;
+        } <span class="kw">else</span> {
+            carryFlag = (result > <span class="num">0xFF</span>);
+            auxCarryFlag = (op1Lower + op2Lower) > <span class="num">0x0F</span>;
+        }
+        <span class="kw">int</span> masked = result & <span class="num">0xFF</span>;
+        zeroFlag = (masked == <span class="num">0</span>);
+        signFlag = ((masked & <span class="num">0x80</span>) != <span class="num">0</span>);
+        parityFlag = (<span class="type">Integer</span>.bitCount(masked) % <span class="num">2</span> == <span class="num">0</span>);
+    }</pre>
+
+<div class="explain">
+  <strong>Line-by-line breakdown.</strong>
+  <ul>
+    <li><code>result</code> is the <em>full</em> integer result of the operation before masking to 8 bits. For addition, if A=0xFF and we add 0x01, result is 0x100 (256). This exceeds 0xFF, so <code>carryFlag</code> is set. For subtraction, if A=0x05 and we subtract 0x06, result is -1. A negative result means a borrow occurred, so <code>carryFlag</code> is set.</li>
+    <li><code>op1Lower</code> and <code>op2Lower</code> are the lower nibbles (bits 0 through 3) of the two operands. The auxiliary carry flag is set when there is a carry out of bit 3. For addition, this occurs when the sum of the lower nibbles exceeds 0x0F (15). For subtraction, it occurs when the lower nibble of the first operand is less than that of the second (a borrow is needed).</li>
+    <li><code>masked = result &amp; 0xFF</code> truncates the result to 8 bits, discarding any carry or borrow information. This is the value that will actually be stored back into the register.</li>
+    <li>The zero flag is true when the masked result is zero. The sign flag copies bit 7. The parity flag uses <code>Integer.bitCount()</code>, a built-in Java method that counts the number of 1-bits in an integer, which is far more readable than a manual loop.</li>
+  </ul>
+</div>
+
+<div class="why">
+  <strong>Why does <code>isSubtraction</code> change the carry logic?</strong> In digital hardware, subtraction is performed by adding the two's complement of the subtrahend. The carry flag has opposite semantics for addition versus subtraction: for addition, a carry <em>out</em> of bit 7 sets CY; for subtraction, a <em>borrow</em> sets CY (which corresponds to the result going negative). Some architectures (like ARM) invert CY after subtraction; the 8085 sets CY=1 when a borrow occurs, meaning the result is negative. Our code uses the sign of the Java <code>int</code> result (negative means borrow) as a direct indicator.
+</div>
+
+<h3>The Preserve-Carry Variant</h3>
+
+<pre>    <span class="kw">public void</span> <span class="fn">updateFlagsExceptCarry</span>(<span class="kw">int</span> result, <span class="kw">int</span> op1Lower, <span class="kw">int</span> op2Lower, <span class="kw">boolean</span> isSubtraction) {
+        <span class="kw">boolean</span> savedCy = carryFlag;
+        updateAllFlags(result, op1Lower, op2Lower, isSubtraction);
+        carryFlag = savedCy;
+    }</pre>
+
+<div class="explain">
+  <strong>What is happening here.</strong> The 8085 specification states that the INR (increment) and DCR (decrement) instructions update all flags <em>except</em> the carry flag. This is a hardware design choice: Intel wanted increment and decrement to be usable as loop counters without disturbing the carry flag that might be needed for multi-byte arithmetic elsewhere. Rather than duplicating the entire flag computation logic with one line removed, we save the carry flag, call the full update, and then restore it. This is a classic example of the Template Method principle in miniature.
+</div>
+
+<h3>The Add and Subtract Methods</h3>
+
+<pre>    <span class="kw">public int</span> <span class="fn">add</span>(<span class="kw">int</span> a, <span class="kw">int</span> b, <span class="kw">int</span> carryIn) {
+        <span class="kw">int</span> result = a + b + carryIn;
+        updateAllFlags(result, a & <span class="num">0x0F</span>, (b + carryIn) & <span class="num">0x0F</span>, <span class="kw">false</span>);
+        <span class="kw">return</span> result & <span class="num">0xFF</span>;
+    }
+
+    <span class="kw">public int</span> <span class="fn">subtract</span>(<span class="kw">int</span> a, <span class="kw">int</span> b, <span class="kw">int</span> borrowIn) {
+        <span class="kw">int</span> result = a - b - borrowIn;
+        updateAllFlags(result, a & <span class="num">0x0F</span>, (b + borrowIn) & <span class="num">0x0F</span>, <span class="kw">true</span>);
+        <span class="kw">return</span> result & <span class="num">0xFF</span>;
+    }</pre>
+
+<div class="explain">
+  <strong>The <code>carryIn</code> parameter.</strong> This single parameter is what distinguishes ADD from ADC (Add with Carry) and SUB from SBB (Subtract with Borrow). When the CPU executes ADD, it calls <code>alu.add(a, operand, 0)</code>. When it executes ADC, it calls <code>alu.add(a, operand, alu.isCarryFlag() ? 1 : 0)</code>. The carry from a previous operation is fed back in as the third operand. This is exactly how multi-byte arithmetic works: you ADD the low bytes, then ADC the high bytes so that any carry from the low addition propagates upward.
+</div>
+
+<h3>Logical Operations</h3>
+
+<pre>    <span class="kw">public int</span> <span class="fn">and</span>(<span class="kw">int</span> a, <span class="kw">int</span> b) {
+        <span class="kw">int</span> result = (a & b) & <span class="num">0xFF</span>;
+        carryFlag = <span class="kw">false</span>;
+        auxCarryFlag = <span class="kw">true</span>;
+        updateSzp(result);
+        <span class="kw">return</span> result;
+    }</pre>
+
+<div class="explain">
+  <strong>Why does AND set AC=1 and CY=0?</strong> This is a documented quirk of the 8085. The AND instruction always clears the carry flag (because AND cannot produce a carry in any mathematical sense) and always sets the auxiliary carry flag. The reason for setting AC is historical: Intel's implementation of ANA used an internal circuit path that happens to generate the AC signal. Some later Intel documentation explains it as "the 8085 effectively ORs the bit-3 outputs of the two operands during ANA," but in practice, programmers simply memorise the rule. For OR and XOR, both CY and AC are cleared, because those operations use a different internal circuit path.
+</div>
+
+<h3>The Flag Register Byte</h3>
+
+<pre>    <span class="kw">public int</span> <span class="fn">getFlagsByte</span>() {
+        <span class="kw">int</span> flags = <span class="num">0x02</span>;          <span class="cmt">// bit 1 always 1</span>
+        <span class="kw">if</span> (signFlag)     flags |= <span class="num">0x80</span>;
+        <span class="kw">if</span> (zeroFlag)     flags |= <span class="num">0x40</span>;
+        <span class="kw">if</span> (auxCarryFlag) flags |= <span class="num">0x10</span>;
+        <span class="kw">if</span> (parityFlag)   flags |= <span class="num">0x04</span>;
+        <span class="kw">if</span> (carryFlag)    flags |= <span class="num">0x01</span>;
+        <span class="kw">return</span> flags;
+    }</pre>
+
+<div class="explain">
+  <strong>What is happening here.</strong> This method composes the five boolean flags into the 8-bit flag register format used by the PUSH PSW and POP PSW instructions. The initial value <code>0x02</code> (binary <code>00000010</code>) sets bit 1 to 1, matching the real 8085's behaviour where this bit is always high. Each <code>|=</code> operation sets the corresponding bit if the flag is true. The inverse method, <code>setFlagsByte</code>, decomposes an 8-bit value back into five booleans using bitwise AND with masks.
+</div>
+
+<a href="#top" class="back-top">&uarr; Back to Top</a>
+
+<hr>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="instrucset">5. InstrucSet: The Instruction Set Interface</h2>
+
+<div class="file-header">
+  <span class="badge badge-file">InstrucSet.java</span>
+  <span class="filename">InstrucSet.java</span>
+  <span class="lines">94 lines</span>
+</div>
+
+<p>The InstrucSet interface is the formal specification of every instruction the 8085 can execute. It contains 74 method signatures, one for each unique mnemonic in the 8085 instruction set. The 8085 has approximately 246 distinct opcodes (different register combinations produce different opcodes), but many of those opcodes share the same mnemonic. For example, <code>MOV A,B</code> (opcode 0x78) and <code>MOV A,C</code> (opcode 0x79) are different opcodes but the same mnemonic, <code>MOV</code>, with different parameters. Our design decision was to represent each mnemonic as one method with string parameters for registers. This produces 74 methods instead of 246, which is dramatically cleaner.</p>
+
+<h3>Data Transfer Group</h3>
+
+<pre>    <span class="kw">void</span> <span class="fn">mov</span>(<span class="type">String</span> dest, <span class="type">String</span> src) <span class="kw">throws</span> <span class="type">SimulatorException</span>;   <span class="cmt">// MOV dest,src: copy src to dest</span>
+    <span class="kw">void</span> <span class="fn">mvi</span>(<span class="type">String</span> dest, <span class="kw">int</span> data) <span class="kw">throws</span> <span class="type">SimulatorException</span>;     <span class="cmt">// MVI dest,d8: load immediate byte</span>
+    <span class="kw">void</span> <span class="fn">lxi</span>(<span class="type">String</span> regPair, <span class="kw">int</span> data16) <span class="kw">throws</span> <span class="type">SimulatorException</span>;<span class="cmt">// LXI rp,d16: load 16-bit immediate</span>
+    <span class="kw">void</span> <span class="fn">lda</span>(<span class="kw">int</span> address) <span class="kw">throws</span> <span class="type">SimulatorException</span>;               <span class="cmt">// LDA addr: A = mem[addr]</span>
+    <span class="kw">void</span> <span class="fn">sta</span>(<span class="kw">int</span> address) <span class="kw">throws</span> <span class="type">SimulatorException</span>;               <span class="cmt">// STA addr: mem[addr] = A</span></pre>
+
+<div class="explain">
+  <strong>The parameter design philosophy.</strong> Each method signature mirrors the assembly syntax. <code>mov("A", "B")</code> corresponds to the assembly instruction <code>MOV A, B</code>. When the operand is a register, we use <code>String</code>. When it is an immediate data byte, we use <code>int</code>. When it is a 16-bit address, we also use <code>int</code> (since Java's <code>int</code> can hold any 16-bit value). The special string <code>"M"</code> represents the memory location pointed to by the HL register pair, which the real 8085 encodes as register code 6 in the opcode byte.
+</div>
+
+<h3>Arithmetic Group</h3>
+
+<pre>    <span class="kw">void</span> <span class="fn">add</span>(<span class="type">String</span> src) <span class="kw">throws</span> <span class="type">SimulatorException</span>;   <span class="cmt">// ADD src: A = A + src, all flags</span>
+    <span class="kw">void</span> <span class="fn">adc</span>(<span class="type">String</span> src) <span class="kw">throws</span> <span class="type">SimulatorException</span>;   <span class="cmt">// ADC src: A = A + src + CY</span>
+    <span class="kw">void</span> <span class="fn">inr</span>(<span class="type">String</span> dest) <span class="kw">throws</span> <span class="type">SimulatorException</span>;  <span class="cmt">// INR dest: dest++, CY unchanged</span>
+    <span class="kw">void</span> <span class="fn">inx</span>(<span class="type">String</span> regPair) <span class="kw">throws</span> <span class="type">SimulatorException</span>;<span class="cmt">// INX rp: rp++, no flags</span>
+    <span class="kw">void</span> <span class="fn">dad</span>(<span class="type">String</span> regPair) <span class="kw">throws</span> <span class="type">SimulatorException</span>;<span class="cmt">// DAD rp: HL = HL + rp, only CY</span></pre>
+
+<div class="explain">
+  <strong>The flag specification in comments.</strong> Each comment succinctly states which flags are affected. This is critical documentation. <code>INR</code> says "CY unchanged" because it updates S, Z, AC, P but not CY. <code>INX</code> says "no flags" because it performs a 16-bit increment that affects no flags at all. <code>DAD</code> says "only CY" because the 16-bit addition only affects the carry flag. These distinctions matter enormously in real 8085 programming. A common beginner mistake is assuming that INR sets the carry flag, which leads to incorrect conditional jump behaviour.
+</div>
+
+<h3>Branching Group</h3>
+
+<pre>    <span class="kw">void</span> <span class="fn">jmp</span>(<span class="kw">int</span> address) <span class="kw">throws</span> <span class="type">SimulatorException</span>;  <span class="cmt">// JMP addr: unconditional</span>
+    <span class="kw">void</span> <span class="fn">jc</span>(<span class="kw">int</span> address) <span class="kw">throws</span> <span class="type">SimulatorException</span>;   <span class="cmt">// JC: if CY=1</span>
+    <span class="kw">void</span> <span class="fn">jnc</span>(<span class="kw">int</span> address) <span class="kw">throws</span> <span class="type">SimulatorException</span>;  <span class="cmt">// JNC: if CY=0</span>
+    <span class="kw">void</span> <span class="fn">call</span>(<span class="kw">int</span> address) <span class="kw">throws</span> <span class="type">SimulatorException</span>; <span class="cmt">// CALL: push PC+3, jump</span>
+    <span class="kw">void</span> <span class="fn">ret</span>() <span class="kw">throws</span> <span class="type">SimulatorException</span>;             <span class="cmt">// RET: pop PC from stack</span>
+    <span class="kw">void</span> <span class="fn">rst</span>(<span class="kw">int</span> n) <span class="kw">throws</span> <span class="type">SimulatorException</span>;        <span class="cmt">// RST n: call n*8</span></pre>
+
+<div class="explain">
+  <strong>The conditional call and return pattern.</strong> The 8085 has 8 conditional jump variants, 8 conditional call variants, and 8 conditional return variants, all testing the same four flags in positive and negative form (CY/no CY, Z/no Z, S positive/S negative, P even/P odd). Rather than defining 24 methods with complex logic, each conditional variant is a one-line method that checks a flag and delegates to the unconditional version. For example, <code>jc(address)</code> is implemented as <code>if (alu.isCarryFlag()) programCounter = address;</code>. This delegation pattern keeps the interface clean and the implementation DRY.
+</div>
+
+<a href="#top" class="back-top">&uarr; Back to Top</a>
+
+<hr>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="day1-summary">6. Day 1 Summary and Forward Context</h2>
+
+<p>Today we examined the four foundational elements that every other component depends upon:</p>
+
+<ol>
+  <li><strong>SimulatorException</strong> provides typed, addressed error reporting that mirrors hardware fault signals.</li>
+  <li><strong>Memory</strong> defines the contract for how bytes enter and leave the system, keeping the CPU and memory logically separable.</li>
+  <li><strong>ALU</strong> encapsulates all arithmetic, logical, and comparison operations with correct five-flag semantics, including the delicate edge cases of INR/DCR (carry preserved) and ANA (AC forced high).</li>
+  <li><strong>InstrucSet</strong> formalises the 74-mnemonic instruction set as a Java interface, establishing the contract that the Architecture class must fulfil.</li>
+</ol>
+
+<p>Tomorrow, in Day 2, we will examine how these contracts are <em>consumed</em>: the OpcodeTable that maps all 256 bytes to mnemonics, the Assembler that translates human-readable assembly into those bytes, and the Architecture class that implements every instruction method and drives the fetch-decode-execute cycle.</p>
+
+
+<!-- ╔════════════════════════════════════════════════════════════════════════╗ -->
+<!-- ║                                                                      ║ -->
+<!-- ║                  D A Y   2 :  C O R E   E N G I N E                  ║ -->
+<!-- ║                                                                      ║ -->
+<!-- ╚════════════════════════════════════════════════════════════════════════╝ -->
+
+<div class="day-divider" id="day2">
+  <h1>Day 2: Core Engine</h1>
+  <span class="day-sub">OpcodeTable &bull; Assembler &bull; Architecture</span>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="opcode">7. OpcodeTable: The Instruction Decoder ROM</h2>
+
+<div class="file-header">
+  <span class="badge badge-file">OpcodeTable.java</span>
+  <span class="filename">OpcodeTable.java</span>
+  <span class="lines">200 lines</span>
+</div>
+
+<p>In the physical 8085, when the CPU fetches a byte from memory, that byte enters the instruction register and is decoded by a complex network of logic gates that determines which internal control signals to activate. This decoding network is essentially a hardwired lookup: for any given 8-bit input (256 possible values), there is exactly one set of control signals that will be generated. Our <code>OpcodeTable</code> is the software equivalent of that decoder network. It is a static lookup table that maps every possible opcode byte (0x00 through 0xFF) to its human-readable mnemonic, its byte size (how many bytes the instruction occupies in memory), and its functional category.</p>
+
+<h3>The OpcodeEntry Inner Class</h3>
+
+<pre><span class="kw">public static class</span> <span class="type">OpcodeEntry</span> {
+    <span class="kw">public final int</span> opcode;
+    <span class="kw">public final</span> <span class="type">String</span> mnemonic;
+    <span class="kw">public final int</span> byteSize;
+    <span class="kw">public final</span> <span class="type">String</span> category;
+
+    <span class="kw">public</span> <span class="fn">OpcodeEntry</span>(<span class="kw">int</span> opcode, <span class="type">String</span> mnemonic, <span class="kw">int</span> byteSize, <span class="type">String</span> category) {
+        <span class="kw">this</span>.opcode = opcode;
+        <span class="kw">this</span>.mnemonic = mnemonic;
+        <span class="kw">this</span>.byteSize = byteSize;
+        <span class="kw">this</span>.category = category;
+    }
+}</pre>
+
+<div class="explain">
+  <strong>What is happening here.</strong> The <code>OpcodeEntry</code> is a value object: an immutable bundle of four pieces of information about a single opcode. All fields are <code>public final</code>, meaning they can be read directly but never modified after construction. This is an intentional trade-off: for a data class with only immutable fields, getters add verbosity without adding safety. In a mutable object, encapsulation through getters/setters would be important. Here, finality provides the same guarantee with less code.
+</div>
+
+<div class="why">
+  <strong>Why <code>String</code> for category, not an enum?</strong> Categories like <code>"DATA_TRANSFER"</code>, <code>"ARITHMETIC"</code>, <code>"LOGICAL"</code>, <code>"BRANCHING"</code>, and <code>"STACK_IO"</code> are used primarily for display and grouping, not for control flow decisions. An enum would be more type-safe, but the categories are never compared programmatically in the current codebase. If future features like "show only arithmetic instructions" are added, converting to an enum would be a straightforward refactor. For now, strings keep the opcode registration calls more readable.
+</div>
+
+<h3>Loop-Based Table Generation</h3>
+
+<p>The 8085 has 246 valid opcodes. Writing 246 individual <code>addEntry</code> calls would be tedious and error-prone. The key insight is that Intel designed the opcode encoding with regular patterns. Certain bit fields within the opcode byte correspond directly to register codes:</p>
+
+<table>
+  <tr><th>Register</th><th>3-bit Code</th><th>In Opcode Bits</th></tr>
+  <tr><td>B</td><td>000</td><td>Bits 5-3 (dest) or bits 2-0 (src)</td></tr>
+  <tr><td>C</td><td>001</td><td></td></tr>
+  <tr><td>D</td><td>010</td><td></td></tr>
+  <tr><td>E</td><td>011</td><td></td></tr>
+  <tr><td>H</td><td>100</td><td></td></tr>
+  <tr><td>L</td><td>101</td><td></td></tr>
+  <tr><td>M (HL)</td><td>110</td><td></td></tr>
+  <tr><td>A</td><td>111</td><td></td></tr>
+</table>
+
+<h4>MOV Generation: The Nested Loop</h4>
+
+<pre><span class="cmt">// Data Transfer — MOV (63 variants, skip 0x76 = HLT)</span>
+<span class="kw">for</span> (<span class="kw">int</span> d = <span class="num">0</span>; d < <span class="num">8</span>; d++)
+    <span class="kw">for</span> (<span class="kw">int</span> s = <span class="num">0</span>; s < <span class="num">8</span>; s++) {
+        <span class="kw">int</span> opcode = <span class="num">0x40</span> | (d << <span class="num">3</span>) | s;
+        <span class="kw">if</span> (opcode == <span class="num">0x76</span>) <span class="kw">continue</span>;
+        addEntry(opcode, <span class="str">"MOV "</span> + REG_NAMES[d] + <span class="str">","</span> + REG_NAMES[s], <span class="num">1</span>, <span class="str">"DATA_TRANSFER"</span>);
+    }</pre>
+
+<div class="explain">
+  <strong>The opcode encoding formula.</strong> Every MOV instruction has the binary format <code>01DDDSSS</code>, where DDD is the 3-bit destination register code and SSS is the 3-bit source register code. The base value <code>0x40</code> is <code>01000000</code> in binary. The expression <code>(d &lt;&lt; 3)</code> shifts the destination code into bits 5-3, and <code>| s</code> places the source code into bits 2-0. This produces all 64 combinations (8 &times; 8), but the combination where both destination and source are <code>M</code> (code 6) gives opcode <code>0x76</code>, which Intel assigned to <code>HLT</code> instead. The <code>continue</code> statement skips this one collision.
+</div>
+
+<div class="why">
+  <strong>Why does MOV M,M not exist?</strong> The instruction <code>MOV M,M</code> would mean "copy the byte at address HL to the same address HL"—a no-operation that is also pointless. Intel repurposed this opcode slot for <code>HLT</code>, which is far more useful. This is a common trick in ISA design: waste slots in the opcode space are repurposed for high-value instructions. The 8086 and later processors continued this tradition.
+</div>
+
+<h4>Arithmetic Group Generation</h4>
+
+<pre><span class="cmt">// Arithmetic — ADD/ADC/SUB/SBB (8 variants each)</span>
+<span class="kw">for</span> (<span class="kw">int</span> s = <span class="num">0</span>; s < <span class="num">8</span>; s++) {
+    addEntry(<span class="num">0x80</span> | s, <span class="str">"ADD "</span> + REG_NAMES[s], <span class="num">1</span>, <span class="str">"ARITHMETIC"</span>);
+    addEntry(<span class="num">0x88</span> | s, <span class="str">"ADC "</span> + REG_NAMES[s], <span class="num">1</span>, <span class="str">"ARITHMETIC"</span>);
+    addEntry(<span class="num">0x90</span> | s, <span class="str">"SUB "</span> + REG_NAMES[s], <span class="num">1</span>, <span class="str">"ARITHMETIC"</span>);
+    addEntry(<span class="num">0x98</span> | s, <span class="str">"SBB "</span> + REG_NAMES[s], <span class="num">1</span>, <span class="str">"ARITHMETIC"</span>);
+}</pre>
+
+<div class="explain">
+  <strong>The pattern.</strong> ADD opcodes start at <code>0x80</code> (<code>10000SSS</code>), ADC at <code>0x88</code> (<code>10001SSS</code>), SUB at <code>0x90</code> (<code>10010SSS</code>), SBB at <code>0x98</code> (<code>10011SSS</code>). The lower three bits encode the source register. One loop body generates 32 entries (4 instruction types &times; 8 registers). Without the loop, we would need 32 separate <code>addEntry</code> calls. The same pattern extends to ANA/XRA/ORA/CMP (starting at 0xA0/0xA8/0xB0/0xB8), which produces another 32 entries in a single loop.
+</div>
+
+<h4>The Dual HashMap Design</h4>
+
+<pre><span class="kw">private static final</span> <span class="type">HashMap</span>&lt;<span class="type">Integer</span>, <span class="type">OpcodeEntry</span>&gt; table = <span class="kw">new</span> <span class="type">HashMap</span>&lt;&gt;();
+<span class="kw">private static final</span> <span class="type">HashMap</span>&lt;<span class="type">String</span>, <span class="type">Integer</span>&gt; mnemonicMap = <span class="kw">new</span> <span class="type">HashMap</span>&lt;&gt;();</pre>
+
+<div class="explain">
+  <strong>Two-way lookup.</strong> The <code>table</code> maps opcode &rarr; entry (used by the CPU during execution: "what does byte 0x3E mean?"). The <code>mnemonicMap</code> maps mnemonic &rarr; opcode (used by the assembler: "what byte does MVI A produce?"). Both are populated by the same <code>addEntry</code> method, ensuring they are always consistent. This is the Bidirectional Map pattern, implemented manually because Java's standard library does not include one (Guava does, via <code>BiMap</code>).
+</div>
+
+<div class="alt">
+  <strong>Alternative: array instead of HashMap.</strong> Since opcodes are integers from 0 to 255, a simple <code>OpcodeEntry[256]</code> array would provide O(1) lookup with lower overhead than a HashMap (no hashing, no collision handling). We chose HashMap because it makes the mnemonic-to-opcode reverse lookup natural. An array approach would require a separate data structure or linear scan for mnemonic lookup. For 256 entries, the performance difference is negligible.
+</div>
+
+<a href="#top" class="back-top">&uarr; Back to Top</a>
+
+<hr>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="assembler">8. Assembler: Two-Pass Translation</h2>
+
+<div class="file-header">
+  <span class="badge badge-file">Assembler.java</span>
+  <span class="filename">Assembler.java</span>
+  <span class="lines">270 lines</span>
+</div>
+
+<p>An assembler is the programme that translates human-readable assembly language (like <code>MVI A, 42H</code>) into machine code bytes (like <code>3E 42</code>) that the CPU can execute. Our assembler uses the classical two-pass algorithm, which is the same approach used by real assemblers like NASM, MASM, and the original Intel ASM85.</p>
+
+<h3>Why Two Passes Are Necessary</h3>
+
+<p>Consider this programme:</p>
+
+<pre>        JMP DONE     <span class="cmt">; Jump to the label DONE</span>
+        MVI A, 05H
+DONE:   HLT</pre>
+
+<div class="explain">
+  <strong>The forward reference problem.</strong> When the assembler encounters <code>JMP DONE</code> on line 1, it needs to know the address of <code>DONE</code>. But <code>DONE</code> is defined on line 3. The assembler has not reached line 3 yet. A single-pass assembler cannot resolve this forward reference. The solution is two passes: Pass 1 scans the entire programme to discover all labels and their addresses, building a "symbol table." Pass 2 generates machine code, and when it encounters <code>JMP DONE</code>, it looks up <code>DONE</code> in the symbol table to find the target address.
+</div>
+
+<h3>Pass 1: Label Collection</h3>
+
+<pre><span class="kw">int</span> currentAddress = startAddress;
+<span class="kw">for</span> (<span class="type">String</span> line : lines) {
+    line = stripComment(line).trim();
+    <span class="kw">if</span> (line.isEmpty()) <span class="kw">continue</span>;
+    <span class="kw">if</span> (line.contains(<span class="str">":"</span>)) {
+        <span class="kw">int</span> idx = line.indexOf(<span class="str">':'</span>);
+        symbolTable.put(line.substring(<span class="num">0</span>, idx).trim().toUpperCase(), currentAddress);
+        line = line.substring(idx + <span class="num">1</span>).trim();
+        <span class="kw">if</span> (line.isEmpty()) <span class="kw">continue</span>;
+    }
+    currentAddress += getInstructionSize(line);
+}</pre>
+
+<div class="explain">
+  <strong>Line-by-line.</strong>
+  <ul>
+    <li><code>stripComment(line)</code> removes everything after a semicolon. In 8085 assembly, <code>;</code> begins a comment, just like <code>//</code> in Java or <code>#</code> in Python.</li>
+    <li>If a line contains a colon, everything before the colon is a label name. The label is stored in the symbol table mapped to the current address. If the line also contains an instruction after the colon (like <code>LOOP: DCR B</code>), the instruction is processed normally.</li>
+    <li><code>getInstructionSize(line)</code> determines how many bytes the instruction occupies (1, 2, or 3) based on the mnemonic. The current address is incremented by this amount. No machine code is generated in this pass.</li>
+  </ul>
+</div>
+
+<h3>The Instruction Size Logic</h3>
+
+<pre><span class="kw">private int</span> <span class="fn">getInstructionSize</span>(<span class="type">String</span> line) {
+    <span class="type">String</span> mnemonic = line.trim().split(<span class="str">"\\s+"</span>)[<span class="num">0</span>].toUpperCase();
+    <span class="kw">switch</span> (mnemonic) {
+        <span class="kw">case</span> <span class="str">"LXI"</span>: <span class="kw">case</span> <span class="str">"LDA"</span>: <span class="kw">case</span> <span class="str">"STA"</span>: <span class="kw">case</span> <span class="str">"LHLD"</span>: <span class="kw">case</span> <span class="str">"SHLD"</span>:
+        <span class="kw">case</span> <span class="str">"JMP"</span>: <span class="kw">case</span> <span class="str">"JC"</span>:  <span class="kw">case</span> <span class="str">"JNC"</span>: <span class="kw">case</span> <span class="str">"JZ"</span>:  <span class="kw">case</span> <span class="str">"JNZ"</span>:
+        <span class="kw">case</span> <span class="str">"CALL"</span>: <span class="cmt">/* ... all 3-byte mnemonics ... */</span>
+            <span class="kw">return</span> <span class="num">3</span>;
+        <span class="kw">case</span> <span class="str">"MVI"</span>: <span class="kw">case</span> <span class="str">"ADI"</span>: <span class="kw">case</span> <span class="str">"ACI"</span>: <span class="kw">case</span> <span class="str">"SUI"</span>: <span class="kw">case</span> <span class="str">"SBI"</span>:
+        <span class="kw">case</span> <span class="str">"ANI"</span>: <span class="kw">case</span> <span class="str">"ORI"</span>: <span class="kw">case</span> <span class="str">"XRI"</span>: <span class="kw">case</span> <span class="str">"CPI"</span>:
+        <span class="kw">case</span> <span class="str">"IN"</span>:  <span class="kw">case</span> <span class="str">"OUT"</span>:
+            <span class="kw">return</span> <span class="num">2</span>;
+        <span class="kw">default</span>:
+            <span class="kw">return</span> <span class="num">1</span>;
+    }
+}</pre>
+
+<div class="explain">
+  <strong>The 8085 instruction length rule.</strong> Every 8085 instruction occupies exactly 1, 2, or 3 bytes. Single-byte instructions (like <code>MOV</code>, <code>ADD</code>, <code>NOP</code>, <code>HLT</code>) encode everything in the opcode itself. Two-byte instructions (like <code>MVI A, 42H</code>) have an opcode byte followed by one data byte. Three-byte instructions (like <code>JMP 2050H</code>, <code>LXI H, 3000H</code>) have an opcode byte followed by two address/data bytes in little-endian order (low byte first, high byte second). No 8085 instruction exceeds 3 bytes.
+</div>
+
+<h3>Pass 2: Machine Code Generation</h3>
+
+<pre><span class="kw">case</span> <span class="str">"MOV"</span>: <span class="kw">return new int</span>[]{<span class="num">0x40</span> | (regCode(ops[<span class="num">0</span>]) << <span class="num">3</span>) | regCode(ops[<span class="num">1</span>])};
+
+<span class="kw">case</span> <span class="str">"MVI"</span>: <span class="kw">return new int</span>[]{<span class="num">0x06</span> | (regCode(ops[<span class="num">0</span>]) << <span class="num">3</span>), parseImm8(ops[<span class="num">1</span>])};
+
+<span class="kw">case</span> <span class="str">"LXI"</span>: <span class="kw">return</span> i3(<span class="num">0x01</span> | (rpCode(ops[<span class="num">0</span>]) << <span class="num">4</span>), parseImm16(ops[<span class="num">1</span>]));</pre>
+
+<div class="explain">
+  <strong>Opcode computation vs. table lookup.</strong> Rather than looking up the opcode in the <code>OpcodeTable</code>, the assembler <em>computes</em> opcodes using the same bit-field encoding rules that Intel's hardware uses. For <code>MOV A, B</code>: <code>regCode("A")</code> returns 7, <code>regCode("B")</code> returns 0, so the opcode is <code>0x40 | (7 &lt;&lt; 3) | 0 = 0x40 | 0x38 | 0x00 = 0x78</code>. This approach is more maintainable than a 63-entry lookup table for MOV alone, and it mirrors how the hardware decoder works in reverse.
+</div>
+
+<h3>The Number Parser</h3>
+
+<pre><span class="kw">private int</span> <span class="fn">parseNumber</span>(<span class="type">String</span> text) <span class="kw">throws</span> <span class="type">SimulatorException</span> {
+    text = text.trim().toUpperCase();
+    <span class="kw">try</span> {
+        <span class="kw">if</span> (text.endsWith(<span class="str">"H"</span>))     <span class="kw">return</span> <span class="type">Integer</span>.parseInt(text.substring(<span class="num">0</span>, text.length() - <span class="num">1</span>), <span class="num">16</span>);
+        <span class="kw">if</span> (text.startsWith(<span class="str">"0X"</span>))  <span class="kw">return</span> <span class="type">Integer</span>.parseInt(text.substring(<span class="num">2</span>), <span class="num">16</span>);
+        <span class="kw">if</span> (text.endsWith(<span class="str">"B"</span>))     <span class="kw">return</span> <span class="type">Integer</span>.parseInt(text.substring(<span class="num">0</span>, text.length() - <span class="num">1</span>), <span class="num">2</span>);
+        <span class="kw">return</span> <span class="type">Integer</span>.parseInt(text);
+    } <span class="kw">catch</span> (<span class="type">NumberFormatException</span> e) {
+        <span class="kw">throw new</span> <span class="type">SimulatorException</span>(<span class="str">"Invalid number format: "</span> + text,
+                <span class="type">SimulatorException</span>.ErrorType.SyntaxError);
+    }
+}</pre>
+
+<div class="explain">
+  <strong>Multi-format number parsing.</strong> The 8085 assembly convention supports several numeric formats. <code>42H</code> is hexadecimal (the trailing H). <code>0x2A</code> is also hexadecimal (the C-language prefix). <code>01000010B</code> is binary (the trailing B). Plain digits like <code>66</code> are decimal. The parser tries each format in order. The suffix-based hex format (<code>42H</code>) is checked first because it is the most common format in 8085 assembly. The <code>0x</code> prefix is a modern convenience. Binary is useful for students learning bit manipulation.
+</div>
+
+<div class="why">
+  <strong>Why the priority order matters.</strong> If we checked for decimal first, the string <code>42H</code> would fail the decimal parse and reach the hex check as a fallback, which would still work. But consider <code>10B</code>: if we checked decimal first, it would parse as 10 (decimal), not 2 (binary). By checking the <code>B</code> suffix before decimal, we ensure binary notation takes priority for strings that end with <code>B</code>. Hexadecimal also takes priority over binary (<code>0ABH</code> is hex, not binary with an odd suffix). This priority chain mirrors the parsing rules of real assemblers.
+</div>
+
+<h3>The Address Resolution Strategy</h3>
+
+<pre><span class="kw">private int</span> <span class="fn">resolveAddress</span>(<span class="type">String</span> ref) <span class="kw">throws</span> <span class="type">SimulatorException</span> {
+    <span class="kw">try</span> {
+        <span class="kw">return</span> parseImm16(ref);
+    } <span class="kw">catch</span> (<span class="type">SimulatorException</span> e) {
+        <span class="type">String</span> label = ref.trim().toUpperCase();
+        <span class="kw">if</span> (symbolTable.containsKey(label)) <span class="kw">return</span> symbolTable.get(label);
+        <span class="kw">throw new</span> <span class="type">SimulatorException</span>(<span class="str">"Undefined label: "</span> + ref,
+                <span class="type">SimulatorException</span>.ErrorType.UndefinedAddress);
+    }
+}</pre>
+
+<div class="explain">
+  <strong>Numeric-first resolution.</strong> When the assembler encounters <code>JMP 2050H</code>, the operand <code>2050H</code> is a numeric address. When it encounters <code>JMP LOOP</code>, the operand <code>LOOP</code> is a symbolic label. The resolver tries to parse the operand as a number first. If that fails (because "LOOP" is not a valid number), it looks the operand up in the symbol table. If both fail, the operand is an undefined label—a meaningful error. This approach is simpler and faster than trying to distinguish labels from numbers syntactically (which is complex because labels can contain digits).
+</div>
+
+<a href="#top" class="back-top">&uarr; Back to Top</a>
+
+<hr>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="architecture">9. Architecture: The CPU Core</h2>
+
+<div class="file-header">
+  <span class="badge badge-file">Architecture.java</span>
+  <span class="filename">Architecture.java</span>
+  <span class="lines">853 lines</span>
+</div>
+
+<p>The <code>Architecture</code> class is the heart of the simulator. It implements both the <code>Memory</code> interface and the <code>InstrucSet</code> interface, meaning it is simultaneously the memory subsystem and the instruction executor. In hardware terms, it is the entire CPU die plus the memory chips, combined into one object.</p>
+
+<h3>State Variables</h3>
+
+<pre><span class="kw">private</span> <span class="type">HashMap</span>&lt;<span class="type">String</span>, <span class="type">Integer</span>&gt; generalRegisters; <span class="cmt">// B, C, D, E, H, L</span>
+<span class="kw">private</span> <span class="type">HashMap</span>&lt;<span class="type">String</span>, <span class="type">Integer</span>&gt; specialRegisters; <span class="cmt">// A, W, Z</span>
+<span class="kw">private int</span> programCounter;  <span class="cmt">// 16-bit PC</span>
+<span class="kw">private int</span> stackPointer;    <span class="cmt">// 16-bit SP</span>
+<span class="kw">private int</span>[] memory;        <span class="cmt">// 64KB byte array</span>
+<span class="kw">private</span> <span class="type">ALU</span> alu;
+<span class="kw">private boolean</span> halted;
+<span class="kw">private</span> <span class="type">HashMap</span>&lt;<span class="type">Integer</span>, <span class="type">Integer</span>&gt; ioPorts;</pre>
+
+<div class="why">
+  <strong>Why HashMap for registers, not an array?</strong> The readability argument. With a HashMap, instruction implementations read <code>getRegister("A")</code> and <code>setRegister("B", value)</code>. With an array indexed by constants, they would read <code>registers[REG_A]</code> and <code>registers[REG_B] = value</code>. Both work, but the HashMap version is self-documenting at every call site. The performance penalty (HashMap vs. array indexing) is negligible for a simulator that processes at most tens of thousands of instructions per second, not millions. In a performance-critical emulator (like a game console emulator running at 60fps), array indexing would be essential.
+</div>
+
+<h3>The Fetch-Decode-Execute Cycle</h3>
+
+<p>The most critical piece of code in the entire project:</p>
+
+<pre><span class="kw">private int</span> <span class="fn">fetchByte</span>() <span class="kw">throws</span> <span class="type">SimulatorException</span> {
+    <span class="kw">int</span> data = readMemory(programCounter);
+    programCounter = (programCounter + <span class="num">1</span>) & <span class="num">0xFFFF</span>;
+    <span class="kw">return</span> data;
+}
+
+<span class="kw">private int</span> <span class="fn">fetchWord</span>() <span class="kw">throws</span> <span class="type">SimulatorException</span> {
+    <span class="kw">int</span> low = fetchByte();
+    <span class="kw">int</span> high = fetchByte();
+    <span class="kw">return</span> (high << <span class="num">8</span>) | low;
+}</pre>
+
+<div class="explain">
+  <strong>The fetch mechanism.</strong> <code>fetchByte()</code> reads one byte from the memory location pointed to by the program counter, then increments PC. The <code>&amp; 0xFFFF</code> mask ensures PC wraps around from 0xFFFF to 0x0000, mimicking how a 16-bit counter overflows in hardware. <code>fetchWord()</code> fetches two bytes: the low byte first, then the high byte. This is <strong>little-endian</strong> byte order—the 8085 stores the least significant byte at the lower address. The word is reconstructed by shifting the high byte left by 8 and ORing with the low byte.
+</div>
+
+<h3>The Instruction Dispatch Switch</h3>
+
+<pre><span class="kw">private void</span> <span class="fn">executeInstruction</span>() <span class="kw">throws</span> <span class="type">SimulatorException</span> {
+    <span class="kw">int</span> opcode = fetchByte();
+    <span class="kw">switch</span> (opcode) {
+        <span class="kw">case</span> <span class="num">0x00</span>: nop(); <span class="kw">break</span>;
+        <span class="kw">case</span> <span class="num">0x01</span>: lxi(<span class="str">"B"</span>, fetchWord()); <span class="kw">break</span>;
+        <span class="cmt">// ... 200+ more cases ...</span>
+        <span class="kw">case</span> <span class="num">0x76</span>: hlt(); <span class="kw">break</span>;
+        <span class="cmt">// ...</span>
+        <span class="kw">default</span>:
+            <span class="kw">if</span> (opcode >= <span class="num">0x40</span> && opcode <= <span class="num">0x7F</span>) {
+                <span class="type">String</span>[] regNames = {<span class="str">"B"</span>,<span class="str">"C"</span>,<span class="str">"D"</span>,<span class="str">"E"</span>,<span class="str">"H"</span>,<span class="str">"L"</span>,<span class="str">"M"</span>,<span class="str">"A"</span>};
+                <span class="kw">int</span> dest = (opcode >> <span class="num">3</span>) & <span class="num">0x07</span>;
+                <span class="kw">int</span> src  = opcode & <span class="num">0x07</span>;
+                mov(regNames[dest], regNames[src]);
+            } <span class="kw">else</span> {
+                <span class="kw">throw new</span> <span class="type">SimulatorException</span>(<span class="str">"Unknown opcode"</span>, ...);
+            }
+    }
+}</pre>
+
+<div class="explain">
+  <strong>Why a giant switch, not a lookup table of lambdas?</strong> In a modern Java codebase, you might create a <code>Map&lt;Integer, Runnable&gt;</code> and populate it with lambda expressions for each opcode. That approach is elegant but introduces overhead from autoboxing, lambda capture, and indirection. The switch statement compiles to a <code>tableswitch</code> bytecode in Java, which is essentially a jump table—the fastest possible dispatch mechanism on the JVM. For a simulator where this method is called for every single instruction, raw speed matters.</p>
+  <p>The MOV instructions (63 opcodes occupying the range 0x40-0x7F minus 0x76) are handled in the <code>default</code> branch using bit extraction rather than 63 individual cases. This is the same encoding trick the hardware uses: extract bits 5-3 for the destination and bits 2-0 for the source.
+</div>
+
+<h3>An Instruction Implementation: CALL and RET</h3>
+
+<pre><span class="ann">@Override</span>
+<span class="kw">public void</span> <span class="fn">call</span>(<span class="kw">int</span> address) <span class="kw">throws</span> <span class="type">SimulatorException</span> {
+    <span class="kw">int</span> returnAddr = programCounter;
+    stackPointer = (stackPointer - <span class="num">1</span>) & <span class="num">0xFFFF</span>;
+    writeMemory(stackPointer, (returnAddr >> <span class="num">8</span>) & <span class="num">0xFF</span>);
+    stackPointer = (stackPointer - <span class="num">1</span>) & <span class="num">0xFFFF</span>;
+    writeMemory(stackPointer, returnAddr & <span class="num">0xFF</span>);
+    programCounter = address & <span class="num">0xFFFF</span>;
+}
+
+<span class="ann">@Override</span>
+<span class="kw">public void</span> <span class="fn">ret</span>() <span class="kw">throws</span> <span class="type">SimulatorException</span> {
+    <span class="kw">int</span> low = readMemory(stackPointer);
+    stackPointer = (stackPointer + <span class="num">1</span>) & <span class="num">0xFFFF</span>;
+    <span class="kw">int</span> high = readMemory(stackPointer);
+    stackPointer = (stackPointer + <span class="num">1</span>) & <span class="num">0xFFFF</span>;
+    programCounter = (high << <span class="num">8</span>) | low;
+}</pre>
+
+<div class="explain">
+  <strong>How the stack works.</strong> The 8085's stack grows <em>downward</em> in memory. SP starts at a high address (we default to 0xFFFF) and decreases with each PUSH or CALL. During CALL:
+  <ol>
+    <li>By the time CALL executes, PC has already advanced past the 3-byte CALL instruction, so the current PC <em>is</em> the return address.</li>
+    <li>SP is decremented, and the high byte of the return address is written to the new SP location.</li>
+    <li>SP is decremented again, and the low byte is written. (Little-endian: low byte at lower address.)</li>
+    <li>PC is set to the target address.</li>
+  </ol>
+  During RET, the inverse happens: the low byte is read from [SP], SP increments; the high byte is read from [SP], SP increments; PC is reconstructed.
+</div>
+
+<h3>The Conditional Branch Pattern</h3>
+
+<pre><span class="ann">@Override</span> <span class="kw">public void</span> <span class="fn">jc</span>(<span class="kw">int</span> address)  { <span class="kw">if</span> (alu.isCarryFlag()) programCounter = address; }
+<span class="ann">@Override</span> <span class="kw">public void</span> <span class="fn">jnc</span>(<span class="kw">int</span> address) { <span class="kw">if</span> (!alu.isCarryFlag()) programCounter = address; }
+<span class="ann">@Override</span> <span class="kw">public void</span> <span class="fn">cc</span>(<span class="kw">int</span> address) <span class="kw">throws</span> <span class="type">SimulatorException</span>  { <span class="kw">if</span> (alu.isCarryFlag()) call(address); }
+<span class="ann">@Override</span> <span class="kw">public void</span> <span class="fn">cnc</span>(<span class="kw">int</span> address) <span class="kw">throws</span> <span class="type">SimulatorException</span> { <span class="kw">if</span> (!alu.isCarryFlag()) call(address); }
+<span class="ann">@Override</span> <span class="kw">public void</span> <span class="fn">rc</span>() <span class="kw">throws</span> <span class="type">SimulatorException</span>   { <span class="kw">if</span> (alu.isCarryFlag()) ret(); }
+<span class="ann">@Override</span> <span class="kw">public void</span> <span class="fn">rnc</span>() <span class="kw">throws</span> <span class="type">SimulatorException</span>  { <span class="kw">if</span> (!alu.isCarryFlag()) ret(); }</pre>
+
+<div class="explain">
+  <strong>Delegation over duplication.</strong> Each conditional variant is a guard clause that delegates to the unconditional implementation. <code>cc</code> (Call if Carry) checks the carry flag; if set, it calls <code>call(address)</code>; if not, it does nothing (the programme continues at the next instruction). This produces 24 near-identical one-line methods (8 for jump, 8 for call, 8 for return), which may seem verbose but is maximally readable: every method does exactly one thing, and the flag condition is visible at a glance.
+</div>
+
+<a href="#top" class="back-top">&uarr; Back to Top</a>
+
+<hr>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="day2-summary">10. Day 2 Summary</h2>
+
+<p>Today we examined the three files that form the execution pipeline:</p>
+
+<ol>
+  <li><strong>OpcodeTable</strong> maps all 256 opcodes using loop-generated entries that exploit the encoding regularity of the 8085 ISA. It provides O(1) bidirectional lookup between opcodes and mnemonics.</li>
+  <li><strong>Assembler</strong> implements a classical two-pass algorithm: Pass 1 builds the symbol table by scanning labels and computing addresses; Pass 2 generates machine code by computing opcodes from bit fields and resolving labels from the symbol table. It supports hex, binary, and decimal number formats.</li>
+  <li><strong>Architecture</strong> is the CPU itself. It holds registers in HashMaps, memory in an int array, and delegates computation to the ALU. The fetch-decode-execute cycle is a switch statement that dispatches all 256 opcodes, with the 63 MOV variants handled by bit extraction in the default branch.</li>
+</ol>
+
+<p>Tomorrow, Day 3, we examine the user-facing layer (UserInterface and Main), demonstrate full integration with example programmes, and present the comprehensive roadmap for making this a full-fledged professional simulator.</p>
+
+
+<!-- ╔════════════════════════════════════════════════════════════════════════╗ -->
+<!-- ║                                                                      ║ -->
+<!-- ║          D A Y   3 :  I N T E G R A T I O N   &   F U T U R E       ║ -->
+<!-- ║                                                                      ║ -->
+<!-- ╚════════════════════════════════════════════════════════════════════════╝ -->
+
+<div class="day-divider" id="day3">
+  <h1>Day 3: Integration, UI, and Future Roadmap</h1>
+  <span class="day-sub">UserInterface &bull; Main &bull; System Integration &bull; 30+ Future Features</span>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="main">11. Main: The Power-On Reset</h2>
+
+<div class="file-header">
+  <span class="badge badge-file">Main.java</span>
+  <span class="filename">Main.java</span>
+  <span class="lines">7 lines</span>
+</div>
+
+<pre><span class="kw">public class</span> <span class="type">Main</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="type">String</span>[] args) {
+        <span class="type">UserInterface</span> ui = <span class="kw">new</span> <span class="type">UserInterface</span>();
+        ui.start();
+    }
+}</pre>
+
+<div class="explain">
+  <strong>Why is Main so small?</strong> The Main class serves one purpose: it is the entry point that the JVM calls when you run <code>java Main</code>. All it does is create a <code>UserInterface</code> object and call <code>start()</code>. It contains no logic, no configuration, no argument parsing. This is deliberate. In software architecture, the entry point should be as thin as possible—it should do nothing besides wiring together the components that actually do the work. If Main contained logic (like parsing command-line flags, or initialising the architecture), then testing would require either running the main method directly or duplicating that logic elsewhere. By keeping Main skeletal, the entire simulator can be instantiated and tested programmatically without ever touching Main.
+</div>
+
+<div class="alt">
+  <strong>Future: command-line argument support.</strong> A production simulator would parse arguments in Main:<br>
+  <code>java Main --file program.asm --start 2000H --mode step</code><br>
+  This would use Java's <code>args[]</code> parameter to set the file to load, starting address, and execution mode before passing them to <code>UserInterface</code>. Libraries like Apache Commons CLI or picocli would handle argument parsing. For now, all configuration happens interactively through the menu system.
+</div>
+
+<a href="#top" class="back-top">&uarr; Back to Top</a>
+
+<hr>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="ui">12. UserInterface: The Human Layer</h2>
+
+<div class="file-header">
+  <span class="badge badge-file">UserInterface.java</span>
+  <span class="filename">UserInterface.java</span>
+  <span class="lines">325 lines</span>
+</div>
+
+<p>The <code>UserInterface</code> class is the software equivalent of the front panel on a physical 8085 trainer kit. On a real trainer kit, you have a hex keypad, a seven-segment display, and toggle switches for stepping through instructions. Our CLI interface provides the same capabilities through a menu-driven text interface.</p>
+
+<h3>The Start Method: The Main Loop</h3>
+
+<pre><span class="kw">public void</span> <span class="fn">start</span>() {
+    printWelcomeBanner();
+    configureMemory();
+    assembler = <span class="kw">new</span> <span class="type">Assembler</span>(architecture);
+
+    <span class="kw">while</span> (running) {
+        printMainMenu();
+        <span class="kw">int</span> choice = readIntInput(<span class="str">"Enter your choice: "</span>);
+        handleMenuChoice(choice);
+    }
+    printGoodbye();
+    scanner.close();
+}</pre>
+
+<div class="explain">
+  <strong>The initialisation sequence.</strong> Three things happen before any user interaction: (1) the welcome banner is printed, (2) the memory system is configured (the user chooses default or custom memory range), and (3) the assembler is linked to the architecture. The order matters: the assembler needs a reference to the architecture because it writes assembled machine code directly into the architecture's memory. The main loop then runs until <code>running</code> becomes false (when the user selects option 10, Exit).
+</div>
+
+<h3>Memory Configuration</h3>
+
+<pre><span class="kw">private void</span> <span class="fn">configureMemory</span>() {
+    System.out.println(<span class="str">"1. Default memory range (0000H - FFFFH, 64KB)"</span>);
+    System.out.println(<span class="str">"2. Custom memory range"</span>);
+    <span class="kw">int</span> choice = readIntInput(<span class="str">"Select option: "</span>);
+
+    <span class="kw">if</span> (choice == <span class="num">1</span>) {
+        architecture = <span class="kw">new</span> <span class="type">Architecture</span>();
+    } <span class="kw">else if</span> (choice == <span class="num">2</span>) {
+        <span class="kw">int</span> start = readHexInput(<span class="str">"Enter start address (hex): "</span>);
+        <span class="kw">int</span> end   = readHexInput(<span class="str">"Enter end address (hex): "</span>);
+        <span class="kw">try</span> {
+            architecture = <span class="kw">new</span> <span class="type">Architecture</span>(start, end);
+        } <span class="kw">catch</span> (<span class="type">SimulatorException</span> e) {
+            architecture = <span class="kw">new</span> <span class="type">Architecture</span>(); <span class="cmt">// fallback</span>
+        }
+    }</pre>
+
+<div class="explain">
+  <strong>Graceful degradation.</strong> If the user specifies an invalid custom memory range (like start=0xFFFF, end=0x0000), the constructor throws a <code>SimulatorException</code>, and the code falls back to the default 64KB configuration. This ensures the simulator always starts in a usable state. Error messages are displayed but do not crash the application. This pattern appears throughout the UI: every user-facing operation is wrapped in a try-catch that reports the error and returns to the menu rather than terminating.
+</div>
+
+<h3>The Assembly Entry Handler</h3>
+
+<pre><span class="kw">private void</span> <span class="fn">handleEnterProgram</span>() {
+    <span class="kw">int</span> startAddr = readHexInput(<span class="str">"Start address (default 2000H): "</span>);
+    <span class="kw">if</span> (startAddr == <span class="num">-1</span>) startAddr = <span class="num">0x2000</span>;
+
+    System.out.println(<span class="str">"Enter your program (type 'END' on a new line to finish):"</span>);
+    <span class="type">StringBuilder</span> program = <span class="kw">new</span> <span class="type">StringBuilder</span>();
+    <span class="kw">while</span> (<span class="kw">true</span>) {
+        <span class="type">String</span> line = scanner.nextLine();
+        <span class="kw">if</span> (line.trim().equalsIgnoreCase(<span class="str">"END"</span>)) <span class="kw">break</span>;
+        program.append(line).append(<span class="str">"\n"</span>);
+    }
+
+    <span class="kw">int</span>[] machineCode = assembler.assemble(program.toString(), startAddr);
+    architecture.setProgramCounter(startAddr);
+}</pre>
+
+<div class="explain">
+  <strong>The data flow.</strong> The user types assembly instructions one line at a time into the console. Each line is appended to a <code>StringBuilder</code>. When the user types <code>END</code>, the entire programme text is passed to <code>assembler.assemble()</code>, which performs the two-pass assembly and writes machine code bytes directly into the architecture's memory. The programme counter is then set to the start address so that "Run" will begin execution at the correct location. The assembled bytes are also displayed back to the user for verification.
+</div>
+
+<h3>The Step-Through Debugger</h3>
+
+<pre><span class="kw">private void</span> <span class="fn">handleStepThrough</span>() {
+    <span class="kw">while</span> (!architecture.isHalted()) {
+        <span class="kw">int</span> pc = architecture.getProgramCounter();
+        <span class="kw">int</span> opcode = architecture.readMemory(pc);
+        System.out.printf(<span class="str">"[%04XH] %s\n"</span>, pc, architecture.disassemble(opcode));
+        architecture.step();
+        System.out.println(architecture.getCPUState());
+
+        <span class="type">String</span> input = scanner.nextLine().trim();
+        <span class="kw">if</span> (input.equalsIgnoreCase(<span class="str">"q"</span>)) <span class="kw">break</span>;
+    }
+}</pre>
+
+<div class="explain">
+  <strong>What stepping looks like.</strong> Before each instruction, the debugger shows the current PC address and the disassembled instruction at that address. Then it executes one instruction via <code>architecture.step()</code> and displays the complete CPU state (all registers, flags). The user presses Enter to advance to the next instruction or types 'q' to return to the menu. This mirrors the single-step mode on a real 8085 trainer kit, where you press a "step" button and observe the register state on the LED display after each instruction.
+</div>
+
+<h3>The Hex Input Parser</h3>
+
+<pre><span class="kw">private int</span> <span class="fn">readHexInput</span>(<span class="type">String</span> prompt) {
+    System.out.print(prompt);
+    <span class="type">String</span> input = scanner.nextLine().trim().toUpperCase();
+    <span class="kw">if</span> (input.isEmpty()) <span class="kw">return</span> <span class="num">-1</span>;
+    <span class="kw">if</span> (input.endsWith(<span class="str">"H"</span>)) input = input.substring(<span class="num">0</span>, input.length() - <span class="num">1</span>);
+    <span class="kw">if</span> (input.startsWith(<span class="str">"0X"</span>)) input = input.substring(<span class="num">2</span>);
+    <span class="kw">return</span> <span class="type">Integer</span>.parseInt(input, <span class="num">16</span>);
+}</pre>
+
+<div class="explain">
+  <strong>Flexible input.</strong> The user can type the address in any common format: <code>2000H</code>, <code>0x2000</code>, or simply <code>2000</code> (all are treated as hex). Empty input returns <code>-1</code>, which callers interpret as "use the default value." This prevents the simulator from crashing on accidental Enter presses.
+</div>
+
+<a href="#top" class="back-top">&uarr; Back to Top</a>
+
+<hr>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="integration">13. System Integration: How Everything Connects</h2>
+
+<p>The following diagram shows how all nine files relate to each other at runtime:</p>
+
+<pre>
+  Main
+    |
+    v
+  UserInterface -----> Assembler -----> OpcodeTable (static lookups)
+    |                      |
+    v                      v
+  Architecture -------> ALU (flag computation)
+    |   |
+    |   implements
+    |       |
+    v       v
+  Memory  InstrucSet
+  (interface) (interface)
+    |
+    |  throws
+    v
+  SimulatorException
+</pre>
+
+<div class="explain">
+  <strong>The component interaction flow.</strong>
+  <ol>
+    <li><code>Main</code> creates <code>UserInterface</code>.</li>
+    <li><code>UserInterface</code> creates <code>Architecture</code> (the CPU+memory) and <code>Assembler</code> (linked to that architecture).</li>
+    <li>When the user enters a programme, <code>UserInterface</code> passes it to <code>Assembler</code>.</li>
+    <li><code>Assembler</code> calls <code>OpcodeTable</code> internally for mnemonic resolution and writes bytes into <code>Architecture</code>'s memory.</li>
+    <li>When the user runs the programme, <code>UserInterface</code> calls <code>Architecture.runFrom()</code>.</li>
+    <li><code>Architecture</code> fetches opcodes, decodes them in the switch statement, and calls the corresponding instruction methods (like <code>add()</code>, <code>mov()</code>) which are defined by <code>InstrucSet</code> and implemented in <code>Architecture</code> itself.</li>
+    <li>Arithmetic and logical instructions delegate to <code>ALU</code>, which computes results and updates the five flags.</li>
+    <li>Any error at any level produces a <code>SimulatorException</code>, which bubbles up to <code>UserInterface</code> for display.</li>
+  </ol>
+</div>
+
+<a href="#top" class="back-top">&uarr; Back to Top</a>
+
+<hr>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="examples">14. Working Example Programmes</h2>
+
+<h3>Example 1: Add Two Numbers</h3>
+
+<pre>MVI A, 05H    <span class="cmt">; Load 5 into accumulator</span>
+MVI B, 03H    <span class="cmt">; Load 3 into B</span>
+ADD B         <span class="cmt">; A = A + B = 8</span>
+STA 3000H     <span class="cmt">; Store result at memory address 3000H</span>
+HLT           <span class="cmt">; Stop</span></pre>
+
+<div class="explain">
+  <strong>Machine code trace.</strong> This programme assembles to 8 bytes: <code>3E 05 06 03 80 32 00 30 76</code>. The assembler processes MVI A as opcode 0x3E (from the formula <code>0x06 | (7 &lt;&lt; 3)</code> where 7 is the register code for A) followed by the immediate byte 0x05. ADD B is opcode 0x80 (register B = code 0). STA 3000H is opcode 0x32 followed by 0x00 (low byte of 3000H) and 0x30 (high byte)&mdash;little-endian order.
+</div>
+
+<h3>Example 2: Multiply by Repeated Addition</h3>
+
+<pre>        MVI B, 04H    <span class="cmt">; Multiplicand</span>
+        MVI C, 03H    <span class="cmt">; Multiplier (loop count)</span>
+        MVI A, 00H    <span class="cmt">; Clear accumulator</span>
+LOOP:   ADD B         <span class="cmt">; A = A + B</span>
+        DCR C         <span class="cmt">; C = C - 1</span>
+        JNZ LOOP      <span class="cmt">; If C != 0, repeat</span>
+        STA 3000H     <span class="cmt">; Store product</span>
+        HLT</pre>
+
+<div class="explain">
+  <strong>Label resolution in action.</strong> During Pass 1, the assembler assigns addresses: MVI B is at 2000H (2 bytes), MVI C at 2002H (2 bytes), MVI A at 2004H (2 bytes), LOOP is at 2006H. The label <code>LOOP</code> maps to address 0x2006 in the symbol table. During Pass 2, when <code>JNZ LOOP</code> is encountered, the assembler resolves <code>LOOP</code> to 0x2006 and produces the 3-byte instruction <code>C2 06 20</code> (opcode 0xC2 for JNZ, followed by address 0x2006 in little-endian). The loop executes 3 times, accumulating 4+4+4=12 (0x0C) in the accumulator.
+</div>
+
+<h3>Example 3: Find Larger of Two Numbers</h3>
+
+<pre>        MVI A, 08H
+        MVI B, 05H
+        CMP B         <span class="cmt">; Compare A with B (sets flags from A-B)</span>
+        JNC DONE      <span class="cmt">; If A >= B (no carry), A is already larger</span>
+        MOV A, B      <span class="cmt">; Otherwise, B is larger, copy to A</span>
+DONE:   STA 3000H
+        HLT</pre>
+
+<div class="explain">
+  <strong>How CMP drives conditional logic.</strong> CMP B internally computes A - B and sets flags, but does NOT store the result in A. If A=8 and B=5, then A-B=3 (positive, no borrow), so CY=0. JNC ("jump if no carry") sees CY=0 and jumps to DONE, skipping the MOV. If A were smaller than B, the subtraction would produce a borrow (CY=1), JNC would not jump, and MOV A,B would overwrite A with the larger value. This is the fundamental comparison pattern for the 8085.
+</div>
+
+<a href="#top" class="back-top">&uarr; Back to Top</a>
+
+<hr>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2 id="roadmap">15. Full-Fledged Programme Roadmap</h2>
+
+<p>The current simulator is a working educational tool, but a production-grade 8085 simulator would require dozens of additional features. Below is a comprehensive roadmap organised into six development phases, with detailed descriptions of what each feature entails, why it matters, and how it could be implemented.</p>
+
+<!-- PHASE 1 -->
+<div class="phase-header">
+  <h3><span class="badge badge-phase">Phase 1</span> File I/O and Programme Management</h3>
+  <p>Enable loading and saving assembly files, eliminating the need to retype programmes.</p>
+</div>
+
+<div class="feature-card">
+  <h4>1.1 Assembly File Import (.asm) <span class="priority priority-high">High Priority</span></h4>
+  <p>The ability to load assembly source code from <code>.asm</code> files on disk. The user would specify a file path, and the simulator would read the file contents, pass them to the assembler, and load the resulting machine code into memory. This eliminates the tedious process of typing programmes line by line into the console. Implementation involves adding a <code>java.io.File</code> reader in <code>UserInterface</code> and a new menu option. File encoding should default to UTF-8 with fallback to ASCII for compatibility with legacy assembly files.</p>
+</div>
+
+<div class="feature-card">
+  <h4>1.2 Assembly File Export (.asm) <span class="priority priority-high">High Priority</span></h4>
+  <p>Save the current programme in memory back to an <code>.asm</code> file using a disassembler. This requires implementing a <code>disassembleRange(int from, int to)</code> method in <code>Architecture</code> that walks through memory, decodes each opcode using <code>OpcodeTable</code>, and reconstructs the mnemonic with operands. The disassembler must correctly determine instruction boundaries (consuming 1, 2, or 3 bytes per instruction) and format addresses and data in hex notation.</p>
+</div>
+
+<div class="feature-card">
+  <h4>1.3 Machine Code Binary Export (.bin / .hex) <span class="priority priority-med">Medium Priority</span></h4>
+  <p>Export the assembled machine code as a raw binary file or in Intel HEX format (<code>.hex</code>). Intel HEX is an ASCII text representation of binary data with checksums, widely used for programming EPROM chips. Each line starts with a colon and contains a byte count, address, record type, data bytes, and a checksum. Supporting Intel HEX output would allow students to programme real 8085 trainer kits with code developed in the simulator.</p>
+</div>
+
+<div class="feature-card">
+  <h4>1.4 Session Save/Restore <span class="priority priority-low">Low Priority</span></h4>
+  <p>Serialise the entire simulator state (registers, memory, flags, PC, SP, I/O ports, symbol table) to a JSON or binary file, and restore it later. This enables pausing a debugging session and resuming it hours or days later. Java's built-in <code>Serializable</code> interface could handle this, but JSON is more portable and human-readable. Libraries like Gson or Jackson would be used for serialisation.</p>
+</div>
+
+<!-- PHASE 2 -->
+<div class="phase-header">
+  <h3><span class="badge badge-phase">Phase 2</span> Graphical User Interface</h3>
+  <p>Replace or supplement the CLI with a visual interface for real-time inspection.</p>
+</div>
+
+<div class="feature-card">
+  <h4>2.1 JavaFX or Swing Desktop GUI <span class="priority priority-high">High Priority</span></h4>
+  <p>A graphical interface with panels for the code editor (with syntax highlighting), register view, flag view, memory hex dump, and stack display. JavaFX provides modern styling with CSS-like theming, while Swing offers platform-native look and feel. The architecture already exposes getters for all state (<code>getRegister()</code>, <code>getCPUState()</code>, <code>getMemoryDump()</code>), so the GUI would only consume existing APIs without modifying core logic. The GUI should use an MVC or MVVM pattern to remain decoupled from the simulation engine.</p>
+</div>
+
+<div class="feature-card">
+  <h4>2.2 Real-Time Memory Viewer <span class="priority priority-high">High Priority</span></h4>
+  <p>A scrollable hex-dump panel that highlights the bytes that changed during the last instruction execution. This requires tracking a "dirty set" of modified addresses. Before each instruction, the simulator would snapshot the addresses that write operations target. After execution, the GUI would highlight those cells in a different colour. Implementation: add an <code>ArrayList&lt;Integer&gt; dirtyAddresses</code> field to <code>Architecture</code> that <code>writeMemory()</code> appends to, cleared at the start of each instruction cycle.</p>
+</div>
+
+<div class="feature-card">
+  <h4>2.3 Register Animation <span class="priority priority-low">Low Priority</span></h4>
+  <p>Animate data flow between registers during instruction execution. For example, when <code>MOV B, A</code> executes, a visual arrow or data pulse travels from the A register box to the B register box. This would be purely cosmetic but immensely helpful for students who are still building mental models of how data moves inside a CPU. Implementation would use JavaFX animation timelines.</p>
+</div>
+
+<div class="feature-card">
+  <h4>2.4 Web-Based Interface <span class="priority priority-med">Medium Priority</span></h4>
+  <p>Expose the simulator as a REST API (using Spring Boot or Javalin) and build a web frontend with HTML/CSS/JavaScript. The REST API would have endpoints like <code>POST /assemble</code>, <code>POST /run</code>, <code>POST /step</code>, and <code>GET /state</code>. The web frontend would use WebSockets for real-time state updates during execution. This would make the simulator accessible without installing Java, ideal for classroom settings where students use school computers with restricted software installation rights.</p>
+</div>
+
+<!-- PHASE 3 -->
+<div class="phase-header">
+  <h3><span class="badge badge-phase">Phase 3</span> Assembler Enhancement</h3>
+  <p>Extend the assembler to support professional-grade assembly language features.</p>
+</div>
+
+<div class="feature-card">
+  <h4>3.1 Assembler Directives (ORG, DB, DW, DS, EQU) <span class="priority priority-high">High Priority</span></h4>
+  <p><code>ORG 3000H</code> sets the assembly origin address. <code>DB 42H, 55H</code> (Define Byte) places raw data bytes into memory. <code>DW 2050H</code> (Define Word) places a 16-bit value in little-endian order. <code>DS 10</code> (Define Storage) reserves 10 bytes of uninitialised space. <code>COUNTER EQU 05H</code> assigns a constant value to a symbol. These directives are essential for any non-trivial assembly programme. Implementation requires extending the assembler's parsing to recognise these pseudo-instructions and handle them in both Pass 1 (for address computation) and Pass 2 (for data generation).</p>
+</div>
+
+<div class="feature-card">
+  <h4>3.2 Macro Support <span class="priority priority-med">Medium Priority</span></h4>
+  <p>Define reusable code templates: <code>MACRO ADD16 ... ENDM</code>. When the assembler encounters a macro invocation, it expands the template with the provided arguments. This requires a pre-processing pass (before the standard two passes) that scans for MACRO definitions, stores them in a macro table, and performs textual substitution. Macros can be nested but not recursive (to avoid infinite expansion).</p>
+</div>
+
+<div class="feature-card">
+  <h4>3.3 Include Files <span class="priority priority-med">Medium Priority</span></h4>
+  <p><code>INCLUDE "stdlib.asm"</code> would insert the contents of another file at the current position. This enables code reuse: common subroutines (like BCD arithmetic or string handling) can be placed in library files and included in multiple programmes. The assembler would resolve include paths relative to the main file's directory, with protection against circular includes.</p>
+</div>
+
+<div class="feature-card">
+  <h4>3.4 Error Position Reporting (Line Numbers) <span class="priority priority-high">High Priority</span></h4>
+  <p>Currently, assembly errors report the error type and message but not the line number in the source code. Adding line-number tracking requires carrying a line counter through both assembly passes and embedding it in thrown <code>SimulatorException</code> objects. The error output would change from <code>[SyntaxError]: Unknown mnemonic: MVIX</code> to <code>[SyntaxError] at line 7: Unknown mnemonic: MVIX</code>.</p>
+</div>
+
+<div class="feature-card">
+  <h4>3.5 Listing File Generation <span class="priority priority-low">Low Priority</span></h4>
+  <p>Generate a <code>.lst</code> file that shows each line of source code alongside its assembled address and machine code bytes. For example: <code>2000 3E 05    MVI A, 05H</code>. Listing files are invaluable for debugging and are standard output of professional assemblers. This would be a side-effect of Pass 2: as each instruction is assembled, the listing line is formatted and appended to an output buffer.</p>
+</div>
+
+<!-- PHASE 4 -->
+<div class="phase-header">
+  <h3><span class="badge badge-phase">Phase 4</span> Debugging and Analysis Tools</h3>
+  <p>Professional-grade debugging features for serious programme analysis.</p>
+</div>
+
+<div class="feature-card">
+  <h4>4.1 Breakpoints <span class="priority priority-high">High Priority</span></h4>
+  <p>Set breakpoints at specific memory addresses. During <code>runFrom()</code>, the execution loop checks whether the current PC matches any breakpoint address before executing the instruction. If it does, execution pauses and control returns to the user. Implementation: add a <code>HashSet&lt;Integer&gt; breakpoints</code> field to <code>Architecture</code>. The check costs O(1) per instruction due to the HashSet's hash-based lookup, which is negligible overhead.</p>
+</div>
+
+<div class="feature-card">
+  <h4>4.2 Watchpoints (Memory/Register Watches) <span class="priority priority-med">Medium Priority</span></h4>
+  <p>Pause execution when a specific memory address or register value changes. This is more expensive than breakpoints because every write operation must be checked against the watchpoint list. Implementation: wrap <code>writeMemory()</code> and <code>setRegister()</code> with watchpoint checks. Use a <code>HashMap&lt;Integer, Integer&gt;</code> to track watched addresses and their previous values.</p>
+</div>
+
+<div class="feature-card">
+  <h4>4.3 Execution Trace / History Log <span class="priority priority-med">Medium Priority</span></h4>
+  <p>Record the PC, opcode, and register state at every instruction execution into a circular buffer. The user can then replay the execution history, step backwards, and identify where a bug was introduced. The buffer should be bounded (e.g., last 10,000 instructions) to prevent memory exhaustion on long-running programmes.</p>
+</div>
+
+<div class="feature-card">
+  <h4>4.4 Stack Frame Visualiser <span class="priority priority-low">Low Priority</span></h4>
+  <p>Display the stack as a labelled structure showing return addresses, saved register pairs, and subroutine nesting depth. This requires the simulator to track CALL/RET relationships and annotate stack entries with the source CALL address. Useful for understanding how nested subroutines work.</p>
+</div>
+
+<div class="feature-card">
+  <h4>4.5 Instruction Cycle Counter <span class="priority priority-med">Medium Priority</span></h4>
+  <p>Count the total number of T-states (clock cycles) consumed by the programme. Each 8085 instruction has a defined T-state count (e.g., MOV r,r = 4 T-states, MVI r,d8 = 7 T-states, CALL = 18 T-states). Add a <code>tStates</code> field to <code>OpcodeEntry</code> and accumulate the count during execution. This enables performance analysis and is essential for timing-sensitive applications.</p>
+</div>
+
+<div class="feature-card">
+  <h4>4.6 Comparison / Diff Mode <span class="priority priority-low">Low Priority</span></h4>
+  <p>Run two programmes side by side and highlight differences in register and memory state after execution. Useful for verifying that an optimised version of a programme produces the same results as the original. Implementation would instantiate two <code>Architecture</code> objects and compare their states.</p>
+</div>
+
+<!-- PHASE 5 -->
+<div class="phase-header">
+  <h3><span class="badge badge-phase">Phase 5</span> Hardware Accuracy and Advanced Emulation</h3>
+  <p>Bring the simulator closer to the behaviour of real silicon.</p>
+</div>
+
+<div class="feature-card">
+  <h4>5.1 Full Interrupt System (RST 5.5, 6.5, 7.5, TRAP) <span class="priority priority-high">High Priority</span></h4>
+  <p>The 8085 has five hardware interrupts: TRAP (non-maskable, highest priority), RST 7.5 (edge-triggered), RST 6.5 (level-triggered), RST 5.5 (level-triggered), and INTR (general). Currently, <code>ei()</code> and <code>di()</code> set a boolean but nothing tests it. A full implementation would include an interrupt pending queue, priority resolution, interrupt masking via SIM/RIM, and vector address computation. The RIM instruction would return the actual interrupt mask, pending interrupts, and SID (serial input data) bit.</p>
+</div>
+
+<div class="feature-card">
+  <h4>5.2 Serial I/O (SID/SOD) <span class="priority priority-med">Medium Priority</span></h4>
+  <p>The 8085 has dedicated serial input (SID) and serial output (SOD) pins. SIM writes the SOD bit; RIM reads the SID bit. A simulator implementation could connect SID/SOD to a console character stream, or to a virtual UART that communicates over a network socket. This would allow the simulator to interact with external programmes via serial protocol.</p>
+</div>
+
+<div class="feature-card">
+  <h4>5.3 Memory-Mapped I/O <span class="priority priority-med">Medium Priority</span></h4>
+  <p>Map certain memory addresses to virtual hardware devices. For example, addresses 0xFF00-0xFF0F could be mapped to a virtual seven-segment display, where writing a byte to 0xFF00 causes a digit to appear on a simulated display widget. Implementation: add a <code>Map&lt;IntRange, IODevice&gt;</code> to <code>Architecture</code> that <code>readMemory()</code> and <code>writeMemory()</code> check before falling through to the regular memory array.</p>
+</div>
+
+<div class="feature-card">
+  <h4>5.4 Clock Speed Simulation <span class="priority priority-low">Low Priority</span></h4>
+  <p>The real 8085 runs at 3-5 MHz, executing one T-state per clock cycle. A clock speed simulation would pause between instructions to match real-time execution speed. At 3.072 MHz, each T-state is approximately 325 nanoseconds. A MOV instruction (4 T-states) would take 1.3 microseconds. Implementation: use <code>Thread.sleep()</code> with nanosecond precision (or <code>LockSupport.parkNanos()</code>) between instructions, scaled by the T-state count of each instruction.</p>
+</div>
+
+<div class="feature-card">
+  <h4>5.5 Undocumented Opcode Support <span class="priority priority-low">Low Priority</span></h4>
+  <p>The 8085 has 10 undocumented opcodes (0x08, 0x10, 0x18, 0x28, 0x38, 0xCB, 0xD9, 0xDD, 0xED, 0xFD) that were discovered through reverse-engineering. Some perform useful operations like DSUB (16-bit subtract) and RSTV (restart on overflow). Supporting these would make the simulator useful for studying the 8085's hidden capabilities. References: Ken Shirriff's die analysis blog and Dehnadi's undocumented opcode documentation.</p>
+</div>
+
+<div class="feature-card">
+  <h4>5.6 ROM/RAM Region Configuration <span class="priority priority-med">Medium Priority</span></h4>
+  <p>Mark certain memory ranges as read-only (ROM) and others as read-write (RAM). Writing to a ROM region would throw a <code>SimulatorException</code> with <code>ErrorType.InvalidMemoryAddress</code>. Real 8085 systems have ROM (containing the programme) starting at address 0x0000 and RAM starting at a higher address. This distinction is important for understanding embedded system memory maps.</p>
+</div>
+
+<!-- PHASE 6 -->
+<div class="phase-header">
+  <h3><span class="badge badge-phase">Phase 6</span> Performance, Testing, and Ecosystem</h3>
+  <p>Production-grade quality assurance and performance optimisation.</p>
+</div>
+
+<div class="feature-card">
+  <h4>6.1 Multi-Threaded Execution Engine <span class="priority priority-med">Medium Priority</span></h4>
+  <p>Run the simulation engine on a background thread, with the UI on the main thread. This prevents the UI from freezing during long-running programmes. Java's <code>ExecutorService</code> or a dedicated <code>Thread</code> would run the fetch-decode-execute loop. Communication between the UI and engine threads would use a blocking queue or <code>CompletableFuture</code>. Thread safety for shared state (registers, memory) would be ensured via <code>synchronized</code> blocks or <code>ReentrantLock</code>.</p>
+</div>
+
+<div class="feature-card">
+  <h4>6.2 Comprehensive JUnit Test Suite <span class="priority priority-high">High Priority</span></h4>
+  <p>Unit tests for every instruction. Each test would set up initial register/memory state, execute a single instruction, and verify the resulting register/memory/flag state against the expected values from the Intel 8085 User Manual. Edge cases include carry propagation, zero-flag behaviour on overflow, and auxiliary carry across nibble boundaries. The test suite would also include integration tests that run complete programmes and verify final state. JUnit 5 with parameterised tests (<code>@ParameterizedTest</code>) would enable testing all 8 register variants of each instruction with a single test method.</p>
+</div>
+
+<div class="feature-card">
+  <h4>6.3 Demo Programmes Library <span class="priority priority-high">High Priority</span></h4>
+  <p>A built-in library of example programmes accessible from the menu: addition, subtraction, multiplication, division, sorting (bubble sort), factorial, Fibonacci, BCD arithmetic, string operations, subroutine calls, and interrupt handling. Each programme would include inline comments explaining the algorithm. The library would be loadable by number (e.g., "Enter demo number: 1" loads the addition programme). Storage: embed the programmes as string constants in a <code>DemoPrograms</code> class, or load from <code>.asm</code> files in a <code>demos/</code> directory.</p>
+</div>
+
+<div class="feature-card">
+  <h4>6.4 Code Optimiser / Peephole Analysis <span class="priority priority-low">Low Priority</span></h4>
+  <p>Analyse assembled code for common optimisation opportunities: replacing a <code>MVI A, 00H</code> with <code>XRA A</code> (saves one byte), replacing <code>MOV A, A</code> with <code>NOP</code>, detecting unreachable code after unconditional jumps. This would be a static analysis pass over the assembled machine code that suggests optimisations without applying them. Useful as a teaching tool for efficient 8085 programming.</p>
+</div>
+
+<div class="feature-card">
+  <h4>6.5 Cross-Assembler to 8086 / Z80 <span class="priority priority-low">Low Priority</span></h4>
+  <p>Translate 8085 assembly into equivalent 8086 or Z80 assembly. The Z80 is the closest relative (it is upward-compatible with the 8080/8085 at the machine code level). The 8086 uses different mnemonics but many instructions have direct equivalents. A cross-assembler would be an educational tool showing how software portability worked between microprocessor generations.</p>
+</div>
+
+<div class="feature-card">
+  <h4>6.6 Plugin Architecture for Custom I/O Devices <span class="priority priority-low">Low Priority</span></h4>
+  <p>Define a <code>VirtualDevice</code> interface with <code>read(int port)</code> and <code>write(int port, int data)</code> methods. Users could implement custom devices (virtual LED array, virtual keypad, virtual motor controller) and register them with the simulator. The <code>IN</code> and <code>OUT</code> instructions would dispatch to the registered device. This enables open-ended experimentation with I/O-driven programmes.</p>
+</div>
+
+<div class="feature-card">
+  <h4>6.7 Instruction Set Reference / Built-In Help <span class="priority priority-med">Medium Priority</span></h4>
+  <p>A comprehensive built-in help system: typing <code>HELP ADD</code> would display the ADD instruction's syntax, operands, opcode encoding, affected flags, T-state count, and example usage. The reference data would be stored in a structured format (JSON or embedded constants) and queried by the help command. This turns the simulator into a self-contained learning environment.</p>
+</div>
+
+<div class="feature-card">
+  <h4>6.8 Performance Benchmarking Mode <span class="priority priority-low">Low Priority</span></h4>
+  <p>Run a programme N times and report average execution time, instructions per second, and T-states per second. This is useful for benchmarking the simulator itself (how fast can our Java implementation simulate the 8085?) and for comparing different programme algorithms (which implementation of multiplication is more efficient in T-states?).</p>
+</div>
+
+<div class="feature-card">
+  <h4>6.9 Automated Grading Integration <span class="priority priority-low">Low Priority</span></h4>
+  <p>For classroom use: the instructor provides a test harness (initial register/memory state and expected final state). Students submits their assembly programmes, and the simulator evaluates correctness automatically: "Your programme produced A=0x0C, expected A=0x0C: PASSED." This requires a batch mode API that accepts a programme, initial state, and expected state, and returns pass/fail with detailed diff.</p>
+</div>
+
+<div class="feature-card">
+  <h4>6.10 Documentation Generator <span class="priority priority-low">Low Priority</span></h4>
+  <p>Generate HTML documentation from commented assembly source code, similar to Javadoc for Java. Comments following a defined format (e.g., beginning with <code>;;</code>) would be extracted and formatted into a browsable HTML report with indices by label, cross-references, and call graphs.</p>
+</div>
+
+<div class="feature-card">
+  <h4>6.11 Build System Migration (Maven/Gradle) <span class="priority priority-med">Medium Priority</span></h4>
+  <p>Currently, the project is compiled with a manual <code>javac</code> command. Migrating to Maven or Gradle would add dependency management, automated testing (run JUnit on <code>mvn test</code>), packaging (create a runnable <code>.jar</code> with <code>mvn package</code>), and CI/CD integration (GitHub Actions runs tests on every push). A <code>pom.xml</code> or <code>build.gradle</code> file would define the project structure, dependencies, and build lifecycle.</p>
+</div>
+
+<div class="feature-card">
+  <h4>6.12 Syntax Highlighting Code Editor (CLI) <span class="priority priority-low">Low Priority</span></h4>
+  <p>Replace the raw line-by-line input with a terminal-based editor using a library like JLine 3 or Lanterna. This would provide command history (up/down arrows recall previous lines), tab completion for mnemonics, and ANSI colour highlighting for opcodes, registers, and comments. JLine integrates with the JVM's terminal handling to provide readline-like functionality.</p>
+</div>
+
+<a href="#top" class="back-top">&uarr; Back to Top</a>
+
+<hr>
+
+<h2>Summary: Priority Matrix</h2>
+
+<table>
+  <tr><th>Priority</th><th>Features</th><th>Estimated Effort</th></tr>
+  <tr>
+    <td><span class="priority priority-high" style="display:inline-block">High</span></td>
+    <td>File Import/Export, GUI, Real-Time Memory Viewer, Assembler Directives, Line Numbers, Breakpoints, Interrupts, JUnit Tests, Demo Library</td>
+    <td>Each: 1-3 days</td>
+  </tr>
+  <tr>
+    <td><span class="priority priority-med" style="display:inline-block">Medium</span></td>
+    <td>Binary Export, Web Interface, Macros, Includes, Watchpoints, Trace Log, Cycle Counter, Serial I/O, MMIO, ROM/RAM, Multi-Thread, Help System, Build System</td>
+    <td>Each: 2-5 days</td>
+  </tr>
+  <tr>
+    <td><span class="priority priority-low" style="display:inline-block">Low</span></td>
+    <td>Session Save, Register Animation, Listing File, Stack Viz, Diff Mode, Clock Sim, Undocumented Ops, Optimiser, Cross-Assembler, Plugin Arch, Benchmark, Grading, Doc Gen, Syntax Highlight</td>
+    <td>Each: 3-7 days</td>
+  </tr>
+</table>
+
+<div class="explain">
+  <strong>Recommended implementation order.</strong> Start with Phase 1 (file I/O) and the JUnit test suite (Phase 6.2), since these provide the highest return on investment: file I/O makes the simulator usable for real work, and tests provide confidence that future changes do not break existing functionality. Then proceed to the GUI (Phase 2.1) and breakpoints (Phase 4.1), which together transform the simulator from a toy into a legitimate development tool. Assembler directives (Phase 3.1) and the demo library (Phase 6.3) should follow, rounding out the educational aspects of the project.
+</div>
+
+<a href="#top" class="back-top">&uarr; Back to Top</a>
+
+</body>
+</html>

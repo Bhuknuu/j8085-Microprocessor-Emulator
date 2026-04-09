@@ -6,6 +6,7 @@ public class ALU {
     private boolean parityFlag;
     private boolean carryFlag;
 
+
     public ALU() { resetFlags(); }
 
     public void resetFlags() {
