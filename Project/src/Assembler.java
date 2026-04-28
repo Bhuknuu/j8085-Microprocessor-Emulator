@@ -14,13 +14,18 @@ public class Assembler {
         this.originAddress = 0x2000;
     }
 
-    // Main entry: assemble source text into machine code bytes loaded into memory
-    public int[] assemble(String program, int startAddress) throws SimulatorException {
+    /**
+     * [CRITICAL FIX] assembleToBuffer — generates machine code bytes into a pure
+     * int[] buffer WITHOUT writing to Architecture memory.
+     * Callers must call arch.loadProgram() only after this succeeds.
+     * This prevents partial memory corruption when assembly fails mid-way.
+     */
+    public int[] assembleToBuffer(String program, int startAddress) throws SimulatorException {
         this.originAddress = startAddress;
         this.symbolTable.clear();
         String[] lines = program.split("\\n");
 
-        // Pass 1: collect labels and compute addresses
+        // Pass 1: collect labels and handle ORG relocations
         int currentAddress = startAddress;
         for (String line : lines) {
             line = stripComment(line).trim();
@@ -31,12 +36,24 @@ public class Assembler {
                 line = line.substring(idx + 1).trim();
                 if (line.isEmpty()) continue;
             }
+            // [AG-FIX 1.5] ORG: relocate address counter
+            String upper = line.toUpperCase();
+            if (upper.startsWith("ORG")) {
+                int orgAddr = parseImm16(line.substring(3).trim());
+                currentAddress = orgAddr;
+                continue;
+            }
+            // [AG-FIX 1.6] DB/DW/DS byte counting for symbol table accuracy
+            if (upper.startsWith("DB") || upper.startsWith("DW") || upper.startsWith("DS")) {
+                currentAddress += getDirectiveSize(line);
+                continue;
+            }
             currentAddress += getInstructionSize(line);
         }
 
-        // Pass 2: generate machine code
+        // Pass 2: generate bytes into buffer only — no memory writes
         currentAddress = startAddress;
-        List<Integer> machineCode = new ArrayList<>();
+        List<Integer> buffer = new ArrayList<>();
         for (String line : lines) {
             line = stripComment(line).trim();
             if (line.isEmpty()) continue;
@@ -44,14 +61,52 @@ public class Assembler {
                 line = line.substring(line.indexOf(':') + 1).trim();
                 if (line.isEmpty()) continue;
             }
+            String upper = line.toUpperCase();
+            // [AG-FIX 1.5] ORG: update address, emit no bytes
+            if (upper.startsWith("ORG")) {
+                currentAddress = parseImm16(line.substring(3).trim());
+                continue;
+            }
+            // [AG-FIX 1.6] DB: emit bytes for each comma-separated value
+            if (upper.startsWith("DB")) {
+                for (String tok : line.substring(2).split(",")) {
+                    tok = tok.trim();
+                    if (!tok.isEmpty()) { buffer.add(parseImm8(tok)); currentAddress++; }
+                }
+                continue;
+            }
+            // [AG-FIX 1.6] DW: emit 16-bit little-endian words
+            if (upper.startsWith("DW")) {
+                for (String tok : line.substring(2).split(",")) {
+                    tok = tok.trim();
+                    if (!tok.isEmpty()) {
+                        int w = parseImm16(tok);
+                        buffer.add(w & 0xFF); buffer.add((w >> 8) & 0xFF);
+                        currentAddress += 2;
+                    }
+                }
+                continue;
+            }
+            // [AG-FIX 1.6] DS: reserve n zero bytes
+            if (upper.startsWith("DS")) {
+                int n = parseImm16(line.substring(2).trim());
+                for (int i = 0; i < n; i++) { buffer.add(0); currentAddress++; }
+                continue;
+            }
             int[] bytes = assembleInstruction(line, currentAddress);
             for (int b : bytes) {
-                arch.writeMemory(currentAddress, b);
-                machineCode.add(b);
+                buffer.add(b);
                 currentAddress++;
             }
         }
-        return machineCode.stream().mapToInt(Integer::intValue).toArray();
+        return buffer.stream().mapToInt(Integer::intValue).toArray();
+    }
+
+    /** Legacy entry — assembles AND writes directly to memory. Kept for backward compat. */
+    public int[] assemble(String program, int startAddress) throws SimulatorException {
+        int[] bytes = assembleToBuffer(program, startAddress);
+        arch.loadProgram(startAddress, bytes);
+        return bytes;
     }
 
     // Converts a single assembly line to machine code bytes
@@ -257,6 +312,27 @@ public class Assembler {
             default:
                 return 1;
         }
+    }
+
+    // [AG-FIX 1.6] Compute byte size of a directive (DB/DW/DS)
+    private int getDirectiveSize(String line) throws SimulatorException {
+        String upper = line.trim().toUpperCase();
+        if (upper.startsWith("DB")) {
+            String[] vals = line.substring(2).split(",");
+            int count = 0;
+            for (String v : vals) if (!v.trim().isEmpty()) count++;
+            return count;
+        }
+        if (upper.startsWith("DW")) {
+            String[] vals = line.substring(2).split(",");
+            int count = 0;
+            for (String v : vals) if (!v.trim().isEmpty()) count++;
+            return count * 2;
+        }
+        if (upper.startsWith("DS")) {
+            return parseImm16(line.substring(2).trim());
+        }
+        return 0;
     }
 
     // Strip ;comments from a line

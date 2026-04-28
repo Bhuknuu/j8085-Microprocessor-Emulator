@@ -48,16 +48,18 @@ public class ALU {
     }
 
     // Arithmetic: result = a + b + carryIn, updates all flags, returns 8-bit
+    // [AG-FIX] AC: mask b BEFORE adding carry to prevent nibble wrap
     public int add(int a, int b, int carryIn) {
         int result = a + b + carryIn;
-        updateAllFlags(result, a & 0x0F, (b + carryIn) & 0x0F, false);
+        updateAllFlags(result, a & 0x0F, (b & 0x0F) + carryIn, false);
         return result & 0xFF;
     }
 
     // Arithmetic: result = a - b - borrowIn, updates all flags, returns 8-bit
+    // [AG-FIX] AC: mask b BEFORE adding borrow to prevent nibble wrap
     public int subtract(int a, int b, int borrowIn) {
         int result = a - b - borrowIn;
-        updateAllFlags(result, a & 0x0F, (b + borrowIn) & 0x0F, true);
+        updateAllFlags(result, a & 0x0F, (b & 0x0F) + borrowIn, true);
         return result & 0xFF;
     }
 

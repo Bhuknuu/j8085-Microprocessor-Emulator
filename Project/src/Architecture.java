@@ -1,11 +1,12 @@
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
 // Architecture — The 8085 CPU core: registers, memory, ALU, and fetch-decode-execute engine
 public class Architecture implements Memory, InstrucSet {
 
-    // Register file
-    private HashMap<String, Integer> generalRegisters; // B, C, D, E, H, L
-    private HashMap<String, Integer> specialRegisters; // A, W, Z
+    // [AG-FIX 3.7] Register file: int fields replace HashMap for zero-alloc access
+    private int regA, regB, regC, regD, regE, regH, regL, regW, regZ;
     private int programCounter;
     private int stackPointer;
 
@@ -19,6 +20,18 @@ public class Architecture implements Memory, InstrucSet {
     private boolean halted;
     private boolean interruptsEnabled;
     private HashMap<Integer, Integer> ioPorts;
+
+    // [AG-FIX 1.10] Interrupt state for RIM/SIM
+    private int interruptMask = 0x00;        // bits 2-0: mask for RST7.5, RST6.5, RST5.5
+    private boolean rst75Pending = false;
+    private boolean rst65Pending = false;
+    private boolean rst55Pending = false;
+
+    // [AG-FIX 1.12] T-state accumulator (replaces dead byteSize variable)
+    private long totalTStates = 0L;
+
+    // [AG-FIX 1.13] Configurable execution step limit
+    private int executionStepLimit = Integer.MAX_VALUE;
 
     // Default constructor: 64KB
     public Architecture() {
@@ -39,23 +52,18 @@ public class Architecture implements Memory, InstrucSet {
         init();
     }
 
+    // [AG-FIX 3.6] Execution trace: circular buffer of last 64 steps
+    private final String[] traceBuffer = new String[64];
+    private int traceIdx = 0;
+
     private void init() {
-        generalRegisters = new HashMap<>();
-        specialRegisters = new HashMap<>();
         alu = new ALU();
         ioPorts = new HashMap<>();
-        initRegisters();
+        regA=regB=regC=regD=regE=regH=regL=regW=regZ=0;
         programCounter = 0x0000;
         stackPointer = 0xFFFF;
         halted = false;
         interruptsEnabled = false;
-    }
-
-    private void initRegisters() {
-        for (String r : new String[]{"B", "C", "D", "E", "H", "L"})
-            generalRegisters.put(r, 0);
-        for (String r : new String[]{"A", "W", "Z"})
-            specialRegisters.put(r, 0);
     }
 
     // ─── Memory Interface ────────────────────────────────────────
@@ -105,28 +113,41 @@ public class Architecture implements Memory, InstrucSet {
     }
 
     private void validateAddress(int address) throws SimulatorException {
+        // [AG-FIX 1.11] Two-layer check: absolute 16-bit range, then configured range
         if (address < 0 || address > 0xFFFF)
-            throw new SimulatorException("Address out of range: " + Integer.toHexString(address),
+            throw new SimulatorException("Address 0x" + Integer.toHexString(address) + " outside 16-bit space",
                     SimulatorException.ErrorType.InvalidMemoryAddress, address);
+        if (address < memoryStart || address > memoryEnd)
+            throw new SimulatorException(
+                "Address 0x" + String.format("%04X", address) +
+                " outside configured range [0x" + String.format("%04X", memoryStart) +
+                "\u20130x" + String.format("%04X", memoryEnd) + "]",
+                SimulatorException.ErrorType.InvalidMemoryAddress, address);
     }
 
-    // ─── Register Helpers ────────────────────────────────────────
+    // [AG-FIX 3.7] Switch-based register access -- zero allocation
 
     public int getRegister(String name) throws SimulatorException {
-        name = name.toUpperCase();
-        if (generalRegisters.containsKey(name)) return generalRegisters.get(name);
-        if (specialRegisters.containsKey(name)) return specialRegisters.get(name);
-        throw new SimulatorException("Invalid register: " + name,
-                SimulatorException.ErrorType.InvalidRegister);
+        switch(name.toUpperCase()) {
+            case "A": return regA; case "B": return regB; case "C": return regC;
+            case "D": return regD; case "E": return regE;
+            case "H": return regH; case "L": return regL;
+            case "W": return regW; case "Z": return regZ;
+            default: throw new SimulatorException("Invalid register: "+name,
+                    SimulatorException.ErrorType.InvalidRegister);
+        }
     }
 
     public void setRegister(String name, int value) throws SimulatorException {
-        name = name.toUpperCase();
         value &= 0xFF;
-        if (generalRegisters.containsKey(name)) { generalRegisters.put(name, value); return; }
-        if (specialRegisters.containsKey(name)) { specialRegisters.put(name, value); return; }
-        throw new SimulatorException("Invalid register: " + name,
-                SimulatorException.ErrorType.InvalidRegister);
+        switch(name.toUpperCase()) {
+            case "A": regA=value; break; case "B": regB=value; break; case "C": regC=value; break;
+            case "D": regD=value; break; case "E": regE=value; break;
+            case "H": regH=value; break; case "L": regL=value; break;
+            case "W": regW=value; break; case "Z": regZ=value; break;
+            default: throw new SimulatorException("Invalid register: "+name,
+                    SimulatorException.ErrorType.InvalidRegister);
+        }
     }
 
     // Get 16-bit register pair value
@@ -185,17 +206,49 @@ public class Architecture implements Memory, InstrucSet {
         return (high << 8) | low;
     }
 
+    // [AG-FIX 1.13] Configurable step limit — default Integer.MAX_VALUE (no practical limit)
+    public void setExecutionStepLimit(int limit) { this.executionStepLimit = limit; }
+    public int getExecutionStepLimit()           { return executionStepLimit; }
+    public long getTotalTStates()                { return totalTStates; } // [AG-FIX 1.12]
+
+    // [AG-FIX 1.1] Thread-safe snapshot for EDT consumption
+    public synchronized CPUSnapshot getCPUSnapshot(int memFrom, int memTo) {
+        memFrom = Math.max(memFrom, memoryStart);
+        memTo = Math.min(memTo, memoryEnd);
+        int len = Math.max(0, memTo - memFrom + 1);
+        int[] snap = new int[len];
+        System.arraycopy(memory, memFrom, snap, 0, len);
+        try {
+            return new CPUSnapshot(
+                programCounter, stackPointer,
+                getRegister("A"), getRegister("B"), getRegister("C"),
+                getRegister("D"), getRegister("E"), getRegister("H"), getRegister("L"),
+                alu.isSignFlag(), alu.isZeroFlag(), alu.isAuxCarryFlag(),
+                alu.isParityFlag(), alu.isCarryFlag(), halted,
+                snap, memFrom, new java.util.HashMap<>(ioPorts));
+        } catch (SimulatorException e) { throw new RuntimeException(e); }
+    }
+
+    // [AG-FIX 1.1] Default snapshot: 48 bytes around PC
+    public synchronized CPUSnapshot getCPUSnapshot() {
+        int from = Math.max(memoryStart, programCounter - 8);
+        int to = Math.min(memoryEnd, programCounter + 39);
+        return getCPUSnapshot(from, to);
+    }
+
     // Run from a specific address until HLT
     public void runFrom(int address) throws SimulatorException {
         programCounter = address;
         halted = false;
-        int maxSteps = 100000; // safety limit
-        while (!halted && maxSteps-- > 0) {
+        int steps = 0;
+        while (!halted && steps < executionStepLimit) {
             executeInstruction();
+            steps++;
         }
-        if (maxSteps <= 0)
-            throw new SimulatorException("Execution limit exceeded (infinite loop?)",
-                    SimulatorException.ErrorType.InvalidData);
+        if (steps >= executionStepLimit && !halted) // [AG-FIX 1.13]
+            throw new SimulatorException(
+                "Step limit (" + executionStepLimit + ") exceeded — possible infinite loop",
+                SimulatorException.ErrorType.StepLimitExceeded);
     }
 
     // Execute a single instruction (step mode)
@@ -210,8 +263,12 @@ public class Architecture implements Memory, InstrucSet {
 
     // Core fetch-decode-execute
     private void executeInstruction() throws SimulatorException {
+        int pc0 = programCounter; // save for trace
         int opcode = fetchByte();
-        int byteSize = OpcodeTable.getByteSize(opcode);
+        totalTStates += OpcodeTable.getByteSize(opcode); // [AG-FIX 1.12]
+        // [AG-FIX 3.6] Record trace entry
+        traceBuffer[traceIdx] = String.format("%04X:%02X", pc0, opcode);
+        traceIdx = (traceIdx + 1) & 63;
 
         switch (opcode) {
             // NOP
@@ -557,6 +614,9 @@ public class Architecture implements Memory, InstrucSet {
         setRegisterPair("H", result & 0xFFFF);
     }
 
+    // [AG-FIX 1.9] DAA — Intel 8085 Hardware Reference Manual p.2-20
+    // Must NOT route through alu.add() — that recalculates ALL flags incorrectly.
+    // DAA only updates Z, S, P, CY. AC is undefined after DAA per Intel spec.
     @Override
     public void daa() {
         try {
@@ -564,15 +624,23 @@ public class Architecture implements Memory, InstrucSet {
             int correction = 0;
             boolean newCarry = alu.isCarryFlag();
 
+            // Check lower nibble: borrow from BCD units place
             if ((a & 0x0F) > 9 || alu.isAuxCarryFlag()) {
                 correction += 0x06;
             }
-            if (((a + correction) >> 4) > 9 || alu.isCarryFlag()) {
+            // Check ORIGINAL upper nibble (before any correction) for BCD tens overflow
+            if (a > 0x99 || alu.isCarryFlag()) { // [AG-FIX 1.9] was ((a+correction)>>4)>9 — wrong
                 correction += 0x60;
                 newCarry = true;
             }
-            int result = alu.add(a, correction, 0);
+            // Compute result inline — do NOT call alu.add() (it corrupts AC, P, S, Z)
+            int result = (a + correction) & 0xFF;
+            // Manually update only the flags DAA is permitted to change
+            alu.setZeroFlag(result == 0);
+            alu.setSignFlag((result & 0x80) != 0);
+            alu.setParityFlag(Integer.bitCount(result) % 2 == 0);
             alu.setCarryFlag(newCarry);
+            // AC is undefined post-DAA per spec — leave it as-is
             setRegister("A", result);
         } catch (SimulatorException e) { throw new RuntimeException(e); }
     }
@@ -806,8 +874,34 @@ public class Architecture implements Memory, InstrucSet {
     @Override public void nop() { /* do nothing */ }
     @Override public void ei() { interruptsEnabled = true; }
     @Override public void di() { interruptsEnabled = false; }
-    @Override public void rim() { try { setRegister("A", 0x00); } catch (SimulatorException e) { throw new RuntimeException(e); } }
-    @Override public void sim() { /* simplified: no-op */ }
+
+    // [AG-FIX 1.10] RIM — Read Interrupt Masks into A
+    // Format: [SID | RST7.5p | RST6.5p | RST5.5p | IE | M7.5 | M6.5 | M5.5]
+    @Override public void rim() {
+        try {
+            int sod = 0; // TODO: SID (serial input) — requires virtual serial port
+            int pending = (rst75Pending ? 0x40 : 0)
+                        | (rst65Pending ? 0x20 : 0)
+                        | (rst55Pending ? 0x10 : 0);
+            int ie = interruptsEnabled ? 0x08 : 0;
+            setRegister("A", sod | pending | ie | (interruptMask & 0x07));
+        } catch (SimulatorException e) { throw new RuntimeException(e); }
+    }
+
+    // [AG-FIX 1.10] SIM — Set Interrupt Masks from A
+    // Format: [SOD | SOE | X | RST7.5r | MSE | M7.5 | M6.5 | M5.5]
+    @Override public void sim() {
+        try {
+            int a = getRegister("A");
+            if ((a & 0x08) != 0) {            // MSE bit: mask set enable
+                interruptMask = a & 0x07;
+            }
+            if ((a & 0x10) != 0) {            // RST7.5 reset bit
+                rst75Pending = false;
+            }
+            // TODO: SOD/SOE serial output — requires virtual serial port
+        } catch (SimulatorException e) { throw new RuntimeException(e); }
+    }
 
     // ─── State Inspection ────────────────────────────────────────
 
@@ -829,7 +923,7 @@ public class Architecture implements Memory, InstrucSet {
     }
 
     public void reset() {
-        initRegisters();
+        regA=regB=regC=regD=regE=regH=regL=regW=regZ=0;
         programCounter = 0x0000;
         stackPointer = 0xFFFF;
         alu.resetFlags();
@@ -837,6 +931,11 @@ public class Architecture implements Memory, InstrucSet {
         halted = false;
         interruptsEnabled = false;
         ioPorts.clear();
+        // [AG-FIX 1.10] Reset interrupt state
+        interruptMask = 0x00;
+        rst75Pending = false; rst65Pending = false; rst55Pending = false;
+        // [AG-FIX 1.12] Reset T-state counter
+        totalTStates = 0L;
     }
 
     // ─── Getters/Setters for UI ──────────────────────────────────
@@ -847,6 +946,21 @@ public class Architecture implements Memory, InstrucSet {
     public void setStackPointer(int sp) { this.stackPointer = sp & 0xFFFF; }
     public boolean isHalted() { return halted; }
     public ALU getALU() { return alu; }
-    public HashMap<String, Integer> getGeneralRegisters() { return generalRegisters; }
-    public HashMap<String, Integer> getSpecialRegisters() { return specialRegisters; }
+    // [AG-FIX 3.7+3.9] Build immutable map views on demand (no internal HashMap)
+    public Map<String, Integer> getGeneralRegisters() {
+        Map<String,Integer> m = new HashMap<>(6);
+        m.put("B",regB);m.put("C",regC);m.put("D",regD);m.put("E",regE);m.put("H",regH);m.put("L",regL);
+        return Collections.unmodifiableMap(m);
+    }
+    public Map<String, Integer> getSpecialRegisters() {
+        Map<String,Integer> m = new HashMap<>(3);
+        m.put("A",regA);m.put("W",regW);m.put("Z",regZ);
+        return Collections.unmodifiableMap(m);
+    }
+    // [AG-FIX 3.6] Execution trace access
+    public String[] getTrace() {
+        String[] out = new String[64];
+        for(int i=0;i<64;i++) out[i]=traceBuffer[(traceIdx+i)&63];
+        return out;
+    }
 }

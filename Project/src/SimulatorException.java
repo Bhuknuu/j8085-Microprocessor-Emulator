@@ -12,7 +12,8 @@ public class SimulatorException extends Exception {
         MemoryOutOfBound,                       // Program tried to access memory outside range
         HaltEncounter,                          // HLT instruction executed (not really an "error")
         SyntaxError,                            // Assembly syntax is invalid
-        UndefinedAddress                        // Jump/call to a label that doesn't exist
+        UndefinedAddress,                       // Jump/call to a label that doesn't exist
+        StepLimitExceeded                       // [AG-FIX 1.13] Execution step limit hit (probable infinite loop)
     }
     private final ErrorType errorType;
     private final int address;

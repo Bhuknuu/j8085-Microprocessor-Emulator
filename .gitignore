@@ -9,3 +9,13 @@
 /dataSources/
 /dataSources.local.xml
 /src/out
+/Project/src/out
+/Project/out
+# Ignore Gradle project-specific cache directory
+build.gradle/.gradle
+
+# Ignore Gradle build output directory
+build.gradle/build
+
+# Ignore Kotlin plugin data
+build.gradle/.kotlin
